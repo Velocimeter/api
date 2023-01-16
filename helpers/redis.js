@@ -1,5 +1,5 @@
 const config = require('../config')
-const redis = require('redis');
+const redis = require('redis')
 
 const RedisClient = redis.createClient({
   url: process.env.REDIS_URL
@@ -7,20 +7,25 @@ const RedisClient = redis.createClient({
 
 const connect = async () => {
   try {
-
     let connected = false
     try {
       const pong = await RedisClient.ping()
-      if(pong == 'PONG') {
+      if (pong == 'PONG') {
         connected = true
       }
-    } catch(ex) {
+    } catch (ex) {
       console.log(ex)
     }
 
-    if(!connected) {
+    if (!connected) {
       // TODO: Make it work without a running server
-      await RedisClient.connect();
+
+      // const redisServer = require('redis-server')
+      // const server = redisServer(6379)
+      // server.open()
+      // await server.open()
+
+      await RedisClient.connect()
     }
 
     return RedisClient

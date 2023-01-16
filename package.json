@@ -1,9 +1,6 @@
 {
   "name": "api.velodrome.finance",
   "version": "1.0.0",
-  "engines": {
-    "node": "0.12.7"
-  },
   "description": "Velodrome.finance HTTP API",
   "main": "index.js",
   "scripts": {
