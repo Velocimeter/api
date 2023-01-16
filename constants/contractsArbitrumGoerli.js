@@ -1,4 +1,4 @@
-const abis = require('./abis')
+const abis = require("./abis")
 
 module.exports.FACTORY_ADDRESS = '0x3fAaB499b519fdC5819e3D7ed0C26111904cbc28'
 module.exports.FACTORY_ABI = abis.factoryABI
@@ -15,5 +15,4 @@ module.exports.GAUGE_ABI = abis.gaugeABI
 module.exports.BRIBE_ABI = abis.bribeABI
 module.exports.TOKEN_ABI = abis.tokenABI
 
-module.exports.MULTICALL_ADDRESS = '0xD98e3dBE5950Ca8Ce5a4b59630a5652110403E5c' // WTF is this and how do we make it work??
-// 0x2DC0E2aa608532Da689e89e237dF582B783E552C
+module.exports.MULTICALL_ADDRESS = '0x2DC0E2aa608532Da689e89e237dF582B783E552C'
