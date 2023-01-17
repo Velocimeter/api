@@ -1,30 +1,31 @@
-require('dotenv').config()
+require("dotenv").config();
 
 const config = {
   testnet: process.env.TESTNET,
 
   web3: {
-    provider: process.env.PROVIDER
+    provider: process.env.PROVIDER,
   },
 
-  tokenLists: process.env.TOKENLISTS.toString().split('|').filter(Boolean),
+  tokenLists: process.env.TOKENLISTS.toString().split("|").filter(Boolean),
 
   weth: {
-    chainId: 10,
-    name: 'Wrapped ETH',
-    symbol: 'WETH',
-    address: '0x21be370D5312f44cB42ce377BC9b8a0cEF1A4C83', // updated to fantom
+    name: "FAKE DAI",
+    address: "0xE65A051E0ae02eB66a11c73B2BA14021B5aadAEE",
+    symbol: "DAI",
     decimals: 18,
-    logoURI: 'https://weth.io/img/weth_favi.png'
+    chainId: 421613,
+    logoURI:
+      "https://cryptologos.cc/logos/multi-collateral-dai-dai-logo.svg?v=010",
   },
   usdc: {
-    chainId: 10,
-    name: 'USD Coin',
-    symbol: 'USDC',
-    address: '0x04068DA6C83AFCFA0e13ba15A6696662335D5B75', // updated to fantom
+    name: "FAKE USD Coin",
+    address: "0x658e6B62e7ab1d2B29a08F85f8442edEed562b48", // updated to fantom
+    symbol: "USDC",
     decimals: 6,
-    logoURI: 'https://assets.spookyswap.finance/tokens/USDC.png'
-  }
-}
+    chainId: 421613,
+    logoURI: "https://assets.spookyswap.finance/tokens/USDC.png",
+  },
+};
 
-module.exports = config
+module.exports = config;

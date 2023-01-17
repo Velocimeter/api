@@ -14,7 +14,7 @@ let CONTRACTS = null
 if (config.testnet === '1') {
   CONTRACTS = require('../constants/contractsTestnet.js')
 } else {
-  CONTRACTS = require('../constants/contracts.js')
+  CONTRACTS = require('../constants/contractsArbitrumGoerli.js')
 }
 
 const model = {
@@ -79,7 +79,7 @@ const model = {
         res.body = { status: 200, success: true, data: tokenList }
         return next(null, req, res, next)
       } else {
-        let rawdata = fs.readFileSync('token-list.json')
+        let rawdata = fs.readFileSync('goerli-arb-token-list.json')
         let tokenList = JSON.parse(rawdata)
 
         const RC = await redisHelper.connect()
