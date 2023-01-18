@@ -10,9 +10,11 @@ const Multicall = require('@dopex-io/web3-multicall')
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 const CoinGeckoClient = new CoinGecko()
 
+// CONFIG_DUNKS
 let CONTRACTS = null
 if (config.testnet === '1') {
-  CONTRACTS = require('../constants/contractsTestnet.js')
+  CONTRACTS = require('../constants/contracts.js')
+  console.log('we using mainnet arb tings')
 } else {
   CONTRACTS = require('../constants/contractsArbitrumGoerli.js')
 }
@@ -69,7 +71,7 @@ const model = {
   async updateAssets (req, res, next) {
     try {
       if (config.testnet === '1') {
-        let rawdata = fs.readFileSync('testnet-token-list.json')
+        let rawdata = fs.readFileSync('token-list.json')
         let tokenList = JSON.parse(rawdata)
 
         const RC = await redisHelper.connect()
@@ -79,9 +81,9 @@ const model = {
         res.body = { status: 200, success: true, data: tokenList }
         return next(null, req, res, next)
       } else {
-        let rawdata = fs.readFileSync('goerli-arb-token-list.json')
+        let rawdata = fs.readFileSync('token-list.json')
         let tokenList = JSON.parse(rawdata)
-
+        // DUNKS_CONFIG
         const RC = await redisHelper.connect()
 
         // const reply = await RC.get('pairs');
