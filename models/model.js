@@ -14,9 +14,8 @@ const CoinGeckoClient = new CoinGecko()
 let CONTRACTS = null
 if (config.testnet === '1') {
   CONTRACTS = require('../constants/contracts.js')
-  console.log('we using mainnet arb tings')
-} else {
-  CONTRACTS = require('../constants/contractsArbitrumGoerli.js')
+
+  console.log('Using arb mainnet contracts')
 }
 
 const model = {
