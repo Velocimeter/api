@@ -16,6 +16,8 @@ if (config.testnet === '1') {
   CONTRACTS = require('../constants/contractsArbitrumGoerli.js')
 } else {
   CONTRACTS = require('../constants/contracts.js')
+
+  console.log('Using arb mainnet contracts')
 }
 
 const model = {
@@ -425,8 +427,11 @@ const model = {
                 const token = await model._getBaseAsset(web3, tokenAddress)
 
                 // DUNKS THIS IS HARDCODED ONLY FOR PAIR CREATED WITH FRONTEND
-                let rewardRate;
-                if (bribeAddress.toLowerCase() === "0xd205bE3baf65b642960E30747ba9ee36e8De2726".toLowerCase()) {
+                let rewardRate
+                if (
+                  bribeAddress.toLowerCase() ===
+                  '0xd205bE3baf65b642960E30747ba9ee36e8De2726'.toLowerCase()
+                ) {
                   rewardRate = 100
                 } else {
                   rewardRate = await bribeContract.methods
