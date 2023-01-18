@@ -20,7 +20,7 @@ const config = {
   },
   usdc: {
     name: 'USDC',
-    address: '0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8', // updated to fantom
+    address: '0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8', 
     symbol: 'USDC',
     decimals: 6,
     chainId: 42161,
@@ -28,7 +28,7 @@ const config = {
   },
   usdc: {
     name: 'AGG',
-    address: '0x10663b695b8f75647bD3FF0ff609e16D35BbD1eC', // updated to fantom
+    address: '0x10663b695b8f75647bD3FF0ff609e16D35BbD1eC', 
     symbol: 'AGG',
     decimals: 6,
     chainId: 42161,
