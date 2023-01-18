@@ -428,6 +428,18 @@ const model = {
                   .rewardRate(tokenAddress)
                   .call()
 
+                // DUNKS THIS IS HARDCODED ONLY FOR PAIR CREATED WITH FRONTEND
+                let rewardRate
+                if (
+                  bribeAddress.toLowerCase() ===
+                  '0xd205bE3baf65b642960E30747ba9ee36e8De2726'.toLowerCase()
+                ) {
+                  rewardRate = 100
+                } else {
+                  rewardRate = await bribeContract.methods
+                    .rewardRate(tokenAddress)
+                    .call()
+                }
                 return {
                   token: token,
                   rewardRate: BigNumber(rewardRate)
