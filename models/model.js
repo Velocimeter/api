@@ -424,15 +424,17 @@ const model = {
                   .rewards(idx)
                   .call()
                 const token = await model._getBaseAsset(web3, tokenAddress)
-                const rewardRate = await bribeContract.methods
-                  .rewardRate(tokenAddress)
-                  .call()
+                // let rewardRate = await bribeContract.methods
+                //   .rewardRate(tokenAddress)
+                //   .call()
 
                 // DUNKS THIS IS HARDCODED ONLY FOR PAIR CREATED WITH FRONTEND
                 // let rewardRate
                 if (
-                  bribeAddress.toLowerCase() ===
-                  '0xd205bE3baf65b642960E30747ba9ee36e8De2726'.toLowerCase()
+                  // bribeAddress.toLowerCase() ===
+                  // '0xd205bE3baf65b642960E30747ba9ee36e8De2726'.toLowerCase()
+                  1 + 1 ===
+                  2
                 ) {
                   rewardRate = 100
                 } else {
@@ -510,7 +512,8 @@ const model = {
       const RedisClient = await redisHelper.connect()
 
       const multicall = new Multicall({
-        multicallAddress: CONTRACTS.MULTICALL_ADDRESS,
+        // multicallAddress: CONTRACTS.MULTICALL_ADDRESS,
+        multicallAddress: '0xcA11bde05977b3631167028862bE2a173976CA11',
         provider: web3
       })
 
