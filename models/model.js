@@ -16,7 +16,7 @@ if (config.testnet === '1') {
   CONTRACTS = require('../constants/contracts.js')
 
   console.log('Using arb mainnet contracts')
-  console.log(CONTRACTS.MULTICALL_ADDRESS)
+  console.log('0xcA11bde05977b3631167028862bE2a173976CA11')
 }
 
 const model = {
@@ -318,7 +318,7 @@ const model = {
 
       const web3 = new Web3(config.web3.provider)
       const multicall = new Multicall({
-        multicallAddress: CONTRACTS.MULTICALL_ADDRESS,
+        multicallAddress: '0xcA11bde05977b3631167028862bE2a173976CA11',
         provider: web3
       })
 
@@ -512,7 +512,7 @@ const model = {
       const RedisClient = await redisHelper.connect()
 
       const multicall = new Multicall({
-        // multicallAddress: CONTRACTS.MULTICALL_ADDRESS,
+        // multicallAddress: '0xcA11bde05977b3631167028862bE2a173976CA11',
         multicallAddress: '0xcA11bde05977b3631167028862bE2a173976CA11',
         provider: web3
       })
