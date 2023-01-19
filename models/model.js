@@ -10,16 +10,17 @@ const Multicall = require('@dopex-io/web3-multicall')
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 const CoinGeckoClient = new CoinGecko()
 
-// CONFIG_DUNKS
+// CONFIG_DUNKS IN ENV PLEASE SET TESTNET TO 1 IF USING GOERLI, TO 0 IF USING MAINNET
 let CONTRACTS = null
 if (config.testnet === '1') {
+  CONTRACTS = require('../constants/contractsArbitrumGoerli.js')
+} else {
   CONTRACTS = require('../constants/contracts.js')
-
   console.log('Using arb mainnet contracts')
 }
 
 const model = {
-  async mergeTokenLists (req, res, next) {
+  async mergeTokenLists(req, res, next) {
     try {
       let rawdata = fs.readFileSync('token-list.json')
       let tokenList = JSON.parse(rawdata)
@@ -27,11 +28,11 @@ const model = {
       // get ftm tokens from tokenlists
       const tokenLists = config.tokenLists
 
-      const promises = tokenLists.map(url => request(url))
+      const promises = tokenLists.map((url) => request(url))
       const listsOfTokens = await Promise.all(promises)
 
       let tokensLists = listsOfTokens
-        .map(tl => {
+        .map((tl) => {
           try {
             const json = JSON.parse(tl)
             return json.tokens
@@ -45,12 +46,12 @@ const model = {
       tokensLists = [...tokenList, ...tokensLists]
 
       const removedDuplpicates = tokensLists
-        .filter(t => {
+        .filter((t) => {
           return t.chainId === 69 && t.decimals !== ''
         })
         .filter(
           (value, index, self) =>
-            index === self.findIndex(t => t.address === value.address)
+            index === self.findIndex((t) => t.address === value.address)
         )
 
       // const RedisClient = await redisHelper.connect()
@@ -67,7 +68,7 @@ const model = {
     }
   },
 
-  async updateAssets (req, res, next) {
+  async updateAssets(req, res, next) {
     try {
       if (config.testnet === '1') {
         let rawdata = fs.readFileSync('token-list.json')
@@ -103,7 +104,7 @@ const model = {
     }
   },
 
-  async _getAssetPrices (tokenList, pairs) {
+  async _getAssetPrices(tokenList, pairs) {
     try {
       // TODO: Cleanup this...
       const key = 'ckey_91faa71c47df434497e8890c692'
@@ -113,23 +114,23 @@ const model = {
       const priceList = dd.data.items
 
       const usdcPrice = priceList
-        .filter(asset => {
+        .filter((asset) => {
           return asset.contract_ticker_symbol === 'USDC'
         })
-        .reduce(asset => {
+        .reduce((asset) => {
           return asset.quote_rate
         })
 
       // TODO: Make this dynamic, aka sans $FTM, we might need to use $ETH or $OP
       const ftmPrice = priceList
-        .filter(asset => {
+        .filter((asset) => {
           return asset.contract_ticker_symbol === 'WETH'
         })
-        .reduce(asset => {
+        .reduce((asset) => {
           return asset.quote_rate
         })
 
-      const tokenListWithPrices = tokenList.map(token => {
+      const tokenListWithPrices = tokenList.map((token) => {
         //for ftm and usdc we just return the price we got from covalent
         if (token.address.toLowerCase() === config.weth.address.toLowerCase()) {
           token.priceUSD = ftmPrice.quote_rate
@@ -255,9 +256,9 @@ const model = {
     }
   },
 
-  _getPairsFor (token, pairs) {
+  _getPairsFor(token, pairs) {
     try {
-      const relevantPairs = pairs.filter(pair => {
+      const relevantPairs = pairs.filter((pair) => {
         return (
           (pair.token0.address.toLowerCase() == token.address.toLowerCase() ||
             pair.token1.address.toLowerCase() == token.address.toLowerCase()) &&
@@ -279,7 +280,7 @@ const model = {
     }
   },
 
-  async getBaseAssets (req, res, next) {
+  async getBaseAssets(req, res, next) {
     try {
       const RedisClient = await redisHelper.connect()
 
@@ -297,7 +298,7 @@ const model = {
     }
   },
 
-  getRouteAssets (req, res, next) {
+  getRouteAssets(req, res, next) {
     try {
       const routeAssets = [config.weth]
       res.status(205)
@@ -311,14 +312,14 @@ const model = {
     }
   },
 
-  async updatePairs (req, res, next) {
+  async updatePairs(req, res, next) {
     try {
       const RedisClient = await redisHelper.connect()
 
       const web3 = new Web3(config.web3.provider)
       const multicall = new Multicall({
         multicallAddress: CONTRACTS.MULTICALL_ADDRESS,
-        provider: web3
+        provider: web3,
       })
 
       const factoryContract = new web3.eth.Contract(
@@ -334,14 +335,14 @@ const model = {
 
       const [allPairsLength, totalWeight] = await Promise.all([
         factoryContract.methods.allPairsLength().call(),
-        gaugesContract.methods.totalWeight().call()
+        gaugesContract.methods.totalWeight().call(),
       ])
       const arr = Array.from({ length: parseInt(allPairsLength) }, (v, i) => i)
 
       console.log(allPairsLength)
 
       const ps = await Promise.all(
-        arr.map(async idx => {
+        arr.map(async (idx) => {
           const pairAddress = await factoryContract.methods.allPairs(idx).call()
 
           const pairContract = new web3.eth.Contract(
@@ -358,7 +359,7 @@ const model = {
             decimals,
             stable,
             gaugeAddress,
-            gaugeWeight
+            gaugeWeight,
           ] = await multicall.aggregate([
             pairContract.methods.getReserves(),
             pairContract.methods.token0(),
@@ -369,7 +370,7 @@ const model = {
             pairContract.methods.stable(),
             gaugesContract.methods.gauges(pairAddress),
 
-            gaugesContract.methods.weights(pairAddress)
+            gaugesContract.methods.weights(pairAddress),
           ])
 
           const token0 = await model._getBaseAsset(web3, token0Address)
@@ -390,7 +391,7 @@ const model = {
               .toFixed(parseInt(decimals)),
             reserve1: BigNumber(reserves[1])
               .div(10 ** decimals)
-              .toFixed(parseInt(decimals))
+              .toFixed(parseInt(decimals)),
           }
 
           if (gaugeAddress !== ZERO_ADDRESS) {
@@ -401,7 +402,7 @@ const model = {
 
             const [gaugeTotalSupply, bribeAddress] = await multicall.aggregate([
               gaugeContract.methods.totalSupply(),
-              gaugesContract.methods.internal_bribes(gaugeAddress)
+              gaugesContract.methods.internal_bribes(gaugeAddress),
             ])
 
             const bribeContract = new web3.eth.Contract(
@@ -418,14 +419,11 @@ const model = {
             )
 
             let bribes = await Promise.all(
-              arry.map(async idx => {
+              arry.map(async (idx) => {
                 const tokenAddress = await bribeContract.methods
                   .rewards(idx)
                   .call()
                 const token = await model._getBaseAsset(web3, tokenAddress)
-                const rewardRate = await bribeContract.methods
-                  .rewardRate(tokenAddress)
-                  .call()
 
                 // DUNKS THIS IS HARDCODED ONLY FOR PAIR CREATED WITH FRONTEND
                 let rewardRate
@@ -447,12 +445,12 @@ const model = {
                   rewardAmount: BigNumber(rewardRate)
                     .times(604800)
                     .div(10 ** token.decimals)
-                    .toFixed(token.decimals)
+                    .toFixed(token.decimals),
                 }
               })
             )
 
-            bribes = bribes.filter(bribe => {
+            bribes = bribes.filter((bribe) => {
               return bribe.token.isWhitelisted
             })
 
@@ -483,7 +481,7 @@ const model = {
               weightPercent: BigNumber(totalWeight).gt(0)
                 ? BigNumber(gaugeWeight).times(100).div(totalWeight).toFixed(2)
                 : 0,
-              bribes: bribes
+              bribes: bribes,
             }
           }
 
@@ -504,13 +502,13 @@ const model = {
     }
   },
 
-  async _getBaseAsset (web3, address) {
+  async _getBaseAsset(web3, address) {
     try {
       const RedisClient = await redisHelper.connect()
 
       const multicall = new Multicall({
         multicallAddress: CONTRACTS.MULTICALL_ADDRESS,
-        provider: web3
+        provider: web3,
       })
 
       const ba = await RedisClient.get('baseAssets')
@@ -524,7 +522,7 @@ const model = {
 
       const allAssets = [...baseAssets, ...extraAssets]
 
-      const theBaseAsset = allAssets.filter(as => {
+      const theBaseAsset = allAssets.filter((as) => {
         return as.address.toLowerCase() === address.toLowerCase()
       })
       if (theBaseAsset.length > 0) {
@@ -555,7 +553,7 @@ const model = {
           baseAssetContract.methods.symbol(),
           baseAssetContract.methods.decimals(),
           baseAssetContract.methods.name(),
-          gaugesContract.methods.isWhitelisted(address)
+          gaugesContract.methods.isWhitelisted(address),
         ]
       )
 
@@ -566,7 +564,7 @@ const model = {
         decimals: parseInt(decimals),
         chainId: 69,
         logoURI: null,
-        isWhitelisted: isWhitelisted
+        isWhitelisted: isWhitelisted,
       }
 
       extraAssets.push(newBaseAsset)
@@ -583,7 +581,7 @@ const model = {
     }
   },
 
-  async getPairs (req, res, next) {
+  async getPairs(req, res, next) {
     try {
       const RedisClient = await redisHelper.connect()
 
@@ -599,7 +597,7 @@ const model = {
       res.body = { status: 500, success: false, data: ex }
       return next(null, req, res, next)
     }
-  }
+  },
 }
 
 module.exports = model
