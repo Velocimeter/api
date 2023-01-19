@@ -326,6 +326,7 @@ const model = {
         CONTRACTS.FACTORY_ABI,
         CONTRACTS.FACTORY_ADDRESS
       )
+      console.log(factoryContract)
 
       // console.log('dunks the factory contract', factoryContract)
       const gaugesContract = new web3.eth.Contract(
