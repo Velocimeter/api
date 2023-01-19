@@ -16,6 +16,7 @@ if (config.testnet === '1') {
   CONTRACTS = require('../constants/contracts.js')
 
   console.log('Using arb mainnet contracts')
+  console.log(CONTRACTS.MULTICALL_ADDRESS)
 }
 
 const model = {
