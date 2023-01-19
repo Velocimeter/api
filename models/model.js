@@ -13,8 +13,6 @@ const CoinGeckoClient = new CoinGecko()
 // CONFIG_DUNKS
 let CONTRACTS = null
 if (config.testnet === '1') {
-  CONTRACTS = require('../constants/contractsArbitrumGoerli.js')
-} else {
   CONTRACTS = require('../constants/contracts.js')
 
   console.log('Using arb mainnet contracts')
@@ -410,7 +408,7 @@ const model = {
               CONTRACTS.BRIBE_ABI,
               bribeAddress
             )
-
+            console.log('made it to here 3')
             const tokensLength = await bribeContract.methods
               .rewardsListLength()
               .call()
@@ -425,6 +423,9 @@ const model = {
                   .rewards(idx)
                   .call()
                 const token = await model._getBaseAsset(web3, tokenAddress)
+                const rewardRate = await bribeContract.methods
+                  .rewardRate(tokenAddress)
+                  .call()
 
                 // DUNKS THIS IS HARDCODED ONLY FOR PAIR CREATED WITH FRONTEND
                 let rewardRate
