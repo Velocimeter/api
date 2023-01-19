@@ -1,27 +1,36 @@
 {
-  "name": "api.velodrome.finance",
-  "version": "1.0.0",
-  "description": "Velodrome.finance HTTP API",
-  "main": "index.js",
-  "scripts": {
-    "start": "node api.js"
-  },
-  "author": "champs@velodrome.finance",
-  "license": "ISC",
-  "dependencies": {
-    "@dopex-io/web3-multicall": "^0.1.5",
-    "async": "^3.2.0",
-    "bignumber.js": "^9.0.2",
-    "body-parser": "^1.17.2",
-    "coingecko-api": "^1.0.10",
-    "compression": "^1.7.0",
-    "dotenv": "^8.2.0",
-    "express": "^4.15.4",
-    "express-basic-auth": "^1.2.1",
-    "helmet": "^1.3.0",
-    "morgan": "^1.8.2",
-    "redis": "^4.0.2",
-    "request-promise": "^4.2.6",
-    "web3": "^1.3.0"
-  }
+    "name": "api.velodrome.finance",
+    "version": "1.0.0",
+    "description": "Velodrome.finance HTTP API",
+    "main": "index.js",
+    "scripts": {
+        "start": "node api.js"
+    },
+    "author": "champs@velodrome.finance",
+    "license": "ISC",
+    "dependencies": {
+        "@dopex-io/web3-multicall": "^0.1.5",
+        "async": "^3.2.0",
+        "bignumber.js": "^9.0.2",
+        "body-parser": "^1.17.2",
+        "coingecko-api": "^1.0.10",
+        "compression": "^1.7.0",
+        "dotenv": "^8.2.0",
+        "express": "^4.15.4",
+        "express-basic-auth": "^1.2.1",
+        "helmet": "^1.3.0",
+        "morgan": "^1.8.2",
+        "redis": "^4.0.2",
+        "request-promise": "^4.2.6",
+        "web3": "^1.3.0"
+    },
+    "devDependencies": {
+        "prettier": "^2.8.3"
+    },
+    "prettier": {
+        "trailingComma": "es5",
+        "tabWidth": 2,
+        "semi": false,
+        "singleQuote": true
+    }
 }
