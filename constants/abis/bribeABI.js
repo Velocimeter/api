@@ -1,4 +1,4 @@
-export const bribeABI = [
+module.exports = [
   {
     inputs: [],
     stateMutability: 'nonpayable',
