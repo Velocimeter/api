@@ -107,38 +107,41 @@ const model = {
 
   async _getAssetPrices(tokenList, pairs) {
     try {
-      // TODO: Cleanup this...
-      const key = 'ckey_91faa71c47df434497e8890c692'
-      const url = `https://api.covalenthq.com/v1/pricing/tickers/?quote-currency=USD&format=JSON&tickers=USDC,ETH&key=${key}`
-      const prices = await request(url)
-      const dd = JSON.parse(prices)
-      const priceList = dd.data.items
+      const key = config.covalent
 
-      const usdcPrice = priceList
-        .filter((asset) => {
-          return asset.contract_ticker_symbol === 'USDC'
-        })
-        .reduce((asset) => {
-          return asset.quote_rate
-        })
+      const wethUrl = `https://api.covalenthq.com/v1/pricing/historical_by_address/42161/USD/0x82aF49447D8a07e3bd95BD0d56f35241523fBab1/?key=${key}`
+      const wethPrices = await request(wethUrl)
+      const wethDd = JSON.parse(wethPrices)
+      const wethPrice = wethDd.data[0].prices[0].price
 
-      // TODO: Make this dynamic, aka sans $FTM, we might need to use $ETH or $OP
-      const ftmPrice = priceList
-        .filter((asset) => {
-          return asset.contract_ticker_symbol === 'WETH'
-        })
-        .reduce((asset) => {
-          return asset.quote_rate
-        })
+      const usdcUrl = `https://api.covalenthq.com/v1/pricing/historical_by_address/42161/USD/0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee/?key=${key}`
+      const usdcPrices = await request(usdcUrl)
+      const usdcDd = JSON.parse(usdcPrices)
+      const usdcPrice = usdcDd.data[0].prices[0].price
+
+      // const url = `https://api.covalenthq.com/v1/pricing/tickers/?quote-currency=USD&format=JSON&tickers=USDC,ETH&key=${key}`
+      // const prices = await request(url)
+      // const dd = JSON.parse(prices)
+      // const priceList = dd.data.items
+
+      // const usdcPrice = priceList
+      //   .filter((asset) => {
+      //     return asset.contract_ticker_symbol === 'USDC'
+      //   })
+      //   .reduce((asset) => {
+      //     return asset.quote_rate
+      //   })
+
+      // TODO: Make this dynamic, aka sans $FTM, we might need to use $ETH or $OP // ?
 
       const tokenListWithPrices = tokenList.map((token) => {
         //for ftm and usdc we just return the price we got from covalent
         if (token.address.toLowerCase() === config.weth.address.toLowerCase()) {
-          token.priceUSD = ftmPrice.quote_rate
+          token.priceUSD = wethPrice
           return token
         }
         if (token.address.toLowerCase() === config.usdc.address.toLowerCase()) {
-          token.priceUSD = usdcPrice.quote_rate
+          token.priceUSD = usdcPrice
           return token
         }
 
@@ -193,13 +196,13 @@ const model = {
             maxLiquidityPair.token1.address.toLowerCase() ===
             config.weth.address.toLowerCase()
           ) {
-            pairedAssetPrice = ftmPrice.quote_rate
+            pairedAssetPrice = wethPrice
           }
           if (
             maxLiquidityPair.token1.address.toLowerCase() ===
             config.usdc.address.toLowerCase()
           ) {
-            pairedAssetPrice = usdcPrice.quote_rate
+            pairedAssetPrice = usdcPrice
           }
           price = BigNumber(
             BigNumber(maxLiquidityPair.reserve1).div(
@@ -221,13 +224,13 @@ const model = {
             maxLiquidityPair.token0.address.toLowerCase() ===
             config.weth.address.toLowerCase()
           ) {
-            pairedAssetPrice = ftmPrice.quote_rate
+            pairedAssetPrice = wethPrice
           }
           if (
             maxLiquidityPair.token0.address.toLowerCase() ===
             config.usdc.address.toLowerCase()
           ) {
-            pairedAssetPrice = usdcPrice.quote_rate
+            pairedAssetPrice = usdcPrice
           }
           price = BigNumber(
             BigNumber(maxLiquidityPair.reserve0).div(

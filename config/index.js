@@ -7,6 +7,9 @@ const config = {
     provider: process.env.PROVIDER,
   },
 
+  //covalent: process.env.COVALENT_API_KEY,
+  covalent: 'ckey_409dee9411d441f3b08ded6b979',
+
   tokenLists: process.env.TOKENLISTS.toString().split('|').filter(Boolean),
 
   weth: {
