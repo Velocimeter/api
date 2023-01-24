@@ -4,19 +4,18 @@ const config = {
   testnet: process.env.TESTNET,
 
   web3: {
-    provider: process.env.PROVIDER
+    provider: process.env.PROVIDER,
   },
 
   tokenLists: process.env.TOKENLISTS.toString().split('|').filter(Boolean),
 
   weth: {
-    name: 'DAI',
-    address: '0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1',
-    symbol: 'DAI',
+    name: 'WETH',
+    address: '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1',
+    symbol: 'WETH',
     decimals: 18,
     chainId: 42161,
-    logoURI:
-      'https://cryptologos.cc/logos/multi-collateral-dai-dai-logo.svg?v=010'
+    logoURI: 'https://arbiscan.io/token/images/weth_28.png',
   },
   usdc: {
     name: 'USDC',
@@ -24,16 +23,16 @@ const config = {
     symbol: 'USDC',
     decimals: 6,
     chainId: 42161,
-    logoURI: 'https://assets.spookyswap.finance/tokens/USDC.png'
+    logoURI: 'https://assets.spookyswap.finance/tokens/USDC.png',
   },
-  usdc: {
+  agg: {
     name: 'AGG',
-    address: '0x10663b695b8f75647bD3FF0ff609e16D35BbD1eC', // updated to fantom
+    address: '0x10663b695b8f75647bD3FF0ff609e16D35BbD1eC',
     symbol: 'AGG',
-    decimals: 6,
+    decimals: 18,
     chainId: 42161,
-    logoURI: 'https://assets.spookyswap.finance/tokens/USDC.png'
-  }
+    logoURI: 'https://assets.spookyswap.finance/tokens/USDC.png',
+  },
 }
 
 module.exports = config
