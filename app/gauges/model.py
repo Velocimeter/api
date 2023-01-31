@@ -1,14 +1,25 @@
 # -*- coding: utf-8 -*-
+import json
 from multicall import Call, Multicall
 from walrus import Model, TextField, IntegerField, FloatField, HashField
+
+from web3.auto import w3
+from eth_account import Account
+from eth_account.signers.local import LocalAccount
+from web3.middleware import construct_sign_and_send_raw_middleware
 from web3.constants import ADDRESS_ZERO
 
 from app.settings import (
     LOGGER, CACHE, VOTER_ADDRESS,
-    DEFAULT_TOKEN_ADDRESS, WRAPPED_BRIBE_FACTORY_ADDRESS, VE_ADDRESS
+    DEFAULT_TOKEN_ADDRESS, WRAPPED_BRIBE_FACTORY_ADDRESS, VE_ADDRESS, PRIVATE_KEY
 )
 from app.assets import Token
 
+# for creating new bribe
+WRAPPED_BRIBE_ABI = json.loads('[{"inputs":[{"internalType":"address","name":"_voter","type":"address"}],"stateMutability":"nonpayable","type":"constructor"},{"inputs":[{"internalType":"address","name":"existing_bribe","type":"address"}],"name":"createBribe","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"last_bribe","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"oldBribeToNew","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"voter","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"}]')
+# set up private key to web3 
+account: LocalAccount = Account.from_key(PRIVATE_KEY)
+w3.middleware_onion.add(construct_sign_and_send_raw_middleware(account))
 
 class Gauge(Model):
     """Gauge model."""
@@ -100,7 +111,11 @@ class Gauge(Model):
             )()
 
         if data.get('wrapped_bribe_address') in (ADDRESS_ZERO, ''):
-            del data['wrapped_bribe_address']
+                cls.create_wrapped_bribe(data['bribe_address'])
+                data['wrapped_bribe_address'] = Call(
+                WRAPPED_BRIBE_FACTORY_ADDRESS,
+                ['oldBribeToNew(address)(address)', data['bribe_address']]
+            )()
 
         # Cleanup old data
         cls.query_delete(cls.address == address.lower())
@@ -115,6 +130,24 @@ class Gauge(Model):
         cls._update_apr(gauge)
 
         return gauge
+
+    @classmethod
+    def create_wrapped_bribe(cls, bribe_address):
+        wrapped_bribe_factory_contract = w3.eth.contract(address=WRAPPED_BRIBE_FACTORY_ADDRESS, abi=WRAPPED_BRIBE_ABI)
+        nonce = w3.eth.get_transaction_count(account.address)  
+        
+        checksum_address = w3.toChecksumAddress(bribe_address)
+        create_bribe_txn = wrapped_bribe_factory_contract.functions.createBribe(checksum_address).buildTransaction({
+            'chainId': 42161,
+            'maxFeePerGas': w3.toWei('0.1', 'gwei'),
+            'maxPriorityFeePerGas': w3.toWei('0.1', 'gwei'),
+            'nonce': nonce,
+        })
+
+        signed_txn = w3.eth.account.sign_transaction(create_bribe_txn, private_key=PRIVATE_KEY)
+        w3.eth.send_raw_transaction(signed_txn.rawTransaction)  
+        sent = w3.to_hex(w3.keccak(signed_txn.rawTransaction))
+        LOGGER.info('Created tx: %c.', sent)
 
     @classmethod
     @CACHER.cached(timeout=(1 * DAY_IN_SECONDS))

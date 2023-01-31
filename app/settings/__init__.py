@@ -48,6 +48,7 @@ IGNORED_TOKEN_ADDRESSES = \
     os.getenv('IGNORED_TOKEN_ADDRESSES', '').lower().split(',')
 # Will be picked automatically by web3.py
 WEB3_PROVIDER_URI = os.getenv('WEB3_PROVIDER_URI')
+PRIVATE_KEY = os.getenv('PRIVATE_KEY')
 
 FACTORY_ADDRESS = os.getenv('FACTORY_ADDRESS')
 VOTER_ADDRESS = os.getenv('VOTER_ADDRESS')
