@@ -4,6 +4,7 @@ from __future__ import absolute_import
 import logging
 import os
 import sys
+import json
 
 import fakeredis
 from honeybadger import honeybadger
@@ -56,6 +57,7 @@ ROUTER_ADDRESS = os.getenv('ROUTER_ADDRESS')
 VE_ADDRESS = os.getenv('VE_ADDRESS')
 REWARDS_DIST_ADDRESS = os.getenv('REWARDS_DIST_ADDRESS')
 WRAPPED_BRIBE_FACTORY_ADDRESS = os.getenv('WRAPPED_BRIBE_FACTORY_ADDRESS')
+WRAPPED_BRIBE_ABI = json.loads('[{"inputs":[{"internalType":"address","name":"_voter","type":"address"}],"stateMutability":"nonpayable","type":"constructor"},{"inputs":[{"internalType":"address","name":"existing_bribe","type":"address"}],"name":"createBribe","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"last_bribe","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"oldBribeToNew","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"voter","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"}]')
 
 # Seconds to wait before running the chain syncup. `0` disables it!
 SYNC_WAIT_SECONDS = int(os.getenv('SYNC_WAIT_SECONDS', 0))
