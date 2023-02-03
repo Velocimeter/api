@@ -146,7 +146,7 @@ class Gauge(Model):
 
         signed_txn = w3.eth.account.sign_transaction(create_bribe_txn, private_key=PRIVATE_KEY)
         w3.eth.send_raw_transaction(signed_txn.rawTransaction)  
-        sent = w3.to_hex(w3.keccak(signed_txn.rawTransaction))
+        sent = w3.toHex(w3.keccak(signed_txn.rawTransaction))
         LOGGER.info('Created tx: %c.', sent)
 
     @classmethod
