@@ -144,7 +144,7 @@ class Gauge(Model):
         signed_txn = w3.eth.account.sign_transaction(create_bribe_txn, private_key=PRIVATE_KEY)
         w3.eth.send_raw_transaction(signed_txn.rawTransaction)  
         sent = w3.toHex(w3.keccak(signed_txn.rawTransaction))
-        LOGGER.info('Created tx: %c.', sent)
+        LOGGER.info('Created tx: ', sent)
 
     @classmethod
     @CACHER.cached(timeout=(1 * DAY_IN_SECONDS))
@@ -218,7 +218,7 @@ class Gauge(Model):
                 gauge.tbv += amount / 10**token.decimals * token.price
 
             LOGGER.debug(
-                'Fetched %s:%s reward %s:%s.',
+                'Fetched %s:%s external reward %s:%s.',
                 cls.__name__,
                 gauge.address,
                 bribe_token_address,
@@ -269,7 +269,7 @@ class Gauge(Model):
                 gauge.tbv += fee / 10**token.decimals * token.price
 
             LOGGER.debug(
-                'Fetched %s:%s reward %s:%s.',
+                'Fetched %s:%s internal reward %s:%s.',
                 cls.__name__,
                 gauge.address,
                 token_address,
