@@ -62,7 +62,7 @@ WRAPPED_BRIBE_ABI = json.loads('[{"inputs":[{"internalType":"address","name":"_v
 # Seconds to wait before running the chain syncup. `0` disables it!
 SYNC_WAIT_SECONDS = int(os.getenv('SYNC_WAIT_SECONDS', 0))
 
-# Placeholder for our cache instance (Redis)
+# Placeholder for our cache instance (Redis).
 CACHE = None
 
 try:
