@@ -15,9 +15,10 @@ from app.settings import (
 )
 from app.assets import Token
 
-# set up private key to web3 
+# set up private key to web3
 account: LocalAccount = Account.from_key(PRIVATE_KEY)
 w3.middleware_onion.add(construct_sign_and_send_raw_middleware(account))
+
 
 class Gauge(Model):
     """Gauge model."""
@@ -109,8 +110,8 @@ class Gauge(Model):
             )()
 
         if data.get('wrapped_bribe_address') in (ADDRESS_ZERO, ''):
-                cls.create_wrapped_bribe(data['bribe_address'])
-                data['wrapped_bribe_address'] = Call(
+            cls.create_wrapped_bribe(data['bribe_address'])
+            data['wrapped_bribe_address'] = Call(
                 WRAPPED_BRIBE_FACTORY_ADDRESS,
                 ['oldBribeToNew(address)(address)', data['bribe_address']]
             )()
@@ -131,19 +132,21 @@ class Gauge(Model):
 
     @classmethod
     def create_wrapped_bribe(cls, bribe_address):
-        wrapped_bribe_factory_contract = w3.eth.contract(address=WRAPPED_BRIBE_FACTORY_ADDRESS, abi=WRAPPED_BRIBE_ABI)
-        nonce = w3.eth.get_transaction_count(account.address)  
-        
+        wrapped_bribe_factory_contract = w3.eth.contract(
+            address=WRAPPED_BRIBE_FACTORY_ADDRESS, abi=WRAPPED_BRIBE_ABI)
+        nonce = w3.eth.get_transaction_count(account.address)
+
         checksum_address = w3.toChecksumAddress(bribe_address)
         create_bribe_txn = wrapped_bribe_factory_contract.functions.createBribe(checksum_address).buildTransaction({
-            'chainId': 42161,
-            'maxFeePerGas': w3.toWei('0.1', 'gwei'),
-            'maxPriorityFeePerGas': w3.toWei('0.1', 'gwei'),
+            'chainId': 7700,
+            # 'maxFeePerGas': w3.toWei('0.1', 'gwei'),
+            # 'maxPriorityFeePerGas': w3.toWei('0.1', 'gwei'),
             'nonce': nonce,
         })
 
-        signed_txn = w3.eth.account.sign_transaction(create_bribe_txn, private_key=PRIVATE_KEY)
-        w3.eth.send_raw_transaction(signed_txn.rawTransaction)  
+        signed_txn = w3.eth.account.sign_transaction(
+            create_bribe_txn, private_key=PRIVATE_KEY)
+        w3.eth.send_raw_transaction(signed_txn.rawTransaction)
         sent = w3.toHex(w3.keccak(signed_txn.rawTransaction))
         LOGGER.info('Created tx: ', sent)
 
