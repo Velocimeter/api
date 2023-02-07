@@ -2,7 +2,8 @@
 
 import math
 
-from multicall import Call, Multicall
+from multicall import Call
+from app.canto_multicall import CantoMulticall as Multicall
 from walrus import Model, TextField, IntegerField, BooleanField, FloatField
 from web3.constants import ADDRESS_ZERO
 

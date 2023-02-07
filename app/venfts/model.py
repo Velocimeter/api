@@ -2,7 +2,8 @@
 
 from datetime import datetime
 
-from multicall import Call, Multicall
+from multicall import Call
+from app.canto_multicall import CantoMulticall as Multicall
 from walrus import Model, TextField, IntegerField, DateTimeField
 
 from app.rewards import BribeReward, EmissionReward, FeeReward
