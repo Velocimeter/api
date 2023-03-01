@@ -21,7 +21,8 @@ setup(
         'redis == 4.4.0',
         'fakeredis == 2.4.0',
         'walrus == 0.9.2',
-        'honeybadger == 0.14.0'
+        'honeybadger == 0.14.0',
+        'bitarray==1.2.2'
     ),
     version=":versiontools:app"
 )
