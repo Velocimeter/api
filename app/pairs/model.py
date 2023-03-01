@@ -136,6 +136,10 @@ class Pair(Model):
 
         token0 = Token.find(data['token0_address'])
         token1 = Token.find(data['token1_address'])
+        LOGGER.debug('Fetched %s an price is:', token0.symbol)
+        LOGGER.debug(token0.price)
+        LOGGER.debug('Fetched %s an price is:', token1.symbol)
+        LOGGER.debug(token1.price)
 
         data['reserve0'] = data['reserve0'] / (10**token0.decimals)
         data['reserve1'] = data['reserve1'] / (10**token1.decimals)
