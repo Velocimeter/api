@@ -98,7 +98,7 @@ class FeeReward(Reward):
 
         return [
             Call(
-                gauge.fees_address,
+                gauge.wrapped_bribe_address,
                 [
                     'earned(address,uint256)(uint256)',
                     pair.token0_address,
@@ -107,7 +107,7 @@ class FeeReward(Reward):
                 [[fee0_name, None]]
             ),
             Call(
-                gauge.fees_address,
+                gauge.wrapped_bribe_address,
                 [
                     'earned(address,uint256)(uint256)',
                     pair.token1_address,

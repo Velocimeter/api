@@ -218,13 +218,17 @@ class Token(Model):
         address = address.lower()
 
         """Fetches and returns a token from chain."""
-        token_multi = Multicall([
-            Call(address, ['name()(string)'], [['name', None]]),
-            Call(address, ['symbol()(string)'], [['symbol', None]]),
-            Call(address, ['decimals()(uint8)'], [['decimals', None]])
-        ])
+        
+        a=    Call(address, ['name()(string)'], [['name', None]])()
+        b=    Call(address, ['symbol()(string)'], [['symbol', None]])()
+        c=    Call(address, ['decimals()(uint8)'], [['decimals', None]])()
+        # token_multi = Multicall([
+        #     Call(address, ['name()(string)'], [['name', None]]),
+        #     Call(address, ['symbol()(string)'], [['symbol', None]]),
+        #     Call(address, ['decimals()(uint8)'], [['decimals', None]])
+        # ])
 
-        data = token_multi()
+        data = {**a, **b, **c}
 
         # TODO: Add a dummy logo...
         token = cls.create(address=address, **data)

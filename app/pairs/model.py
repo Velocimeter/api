@@ -89,57 +89,74 @@ class Pair(Model):
     def chain_addresses(cls):
         """Fetches pairs/pools from chain."""
         pairs_count = Call(FACTORY_ADDRESS, 'allPairsLength()(uint256)')()
+        arr = []
+        for idx in range(0, pairs_count):
+            arr.append(Call(FACTORY_ADDRESS, ['allPairs(uint256)(address)', idx])())
 
-        pairs_multi = Multicall([
-            Call(
-                FACTORY_ADDRESS,
-                ['allPairs(uint256)(address)', idx],
-                [[idx, None]]
-            )
-            for idx in range(0, pairs_count)
-        ])
+        # pairs_multi = Multicall([
+        #     Call(
+        #         FACTORY_ADDRESS,
+        #         ['allPairs(uint256)(address)', idx],
+        #         [[idx, None]]
+        #     )
+        #     for idx in range(0, pairs_count)
+        # ])
 
-        return list(pairs_multi().values())
+        return arr
 
     @classmethod
     def from_chain(cls, address):
         """Fetches pair/pool data from chain."""
         address = address.lower()
 
-        pair_multi = Multicall([
-            Call(
-                address,
-                'getReserves()(uint256,uint256)',
-                [['reserve0', None], ['reserve1', None]]
-            ),
-            Call(address, 'token0()(address)', [['token0_address', None]]),
-            Call(address, 'token1()(address)', [['token1_address', None]]),
-            Call(
+        a = Call(address,
+                'getReserves()(uint256,uint256)', [['reserve0', None], ['reserve1', None]])()
+        b = Call(address, 'token0()(address)', [['token0_address', None]])()
+        c = Call(address, 'token1()(address)', [['token1_address', None]])()
+        k = Call(
                 address,
                 'totalSupply()(uint256)',
                 [['total_supply', None]]
-            ),
-            Call(address, 'symbol()(string)', [['symbol', None]]),
-            Call(address, 'decimals()(uint8)', [['decimals', None]]),
-            Call(address, 'stable()(bool)', [['stable', None]]),
-            Call(
+            )()
+        d = Call(address, 'symbol()(string)', [['symbol', None]])()
+        e = Call(address, 'decimals()(uint8)', [['decimals', None]])()
+        f = Call(address, 'stable()(bool)', [['stable', None]])()
+        g = Call(
                 VOTER_ADDRESS,
                 ['gauges(address)(address)', address],
                 [['gauge_address', None]]
-            )
-        ])
+            )()
 
-        data = pair_multi()
+        # pair_multi = Multicall([
+        #     Call(
+        #         address,
+        #         'getReserves()(uint256,uint256)',
+        #         [['reserve0', None], ['reserve1', None]]
+        #     ),
+        #     Call(address, 'token0()(address)', [['token0_address', None]]),
+        #     Call(address, 'token1()(address)', [['token1_address', None]]),
+        #     Call(
+        #         address,
+        #         'totalSupply()(uint256)',
+        #         [['total_supply', None]]
+        #     ),
+        #     Call(address, 'symbol()(string)', [['symbol', None]]),
+        #     Call(address, 'decimals()(uint8)', [['decimals', None]]),
+        #     Call(address, 'stable()(bool)', [['stable', None]]),
+        #     Call(
+        #         VOTER_ADDRESS,
+        #         ['gauges(address)(address)', address],
+        #         [['gauge_address', None]]
+        #     )
+        # ])
+
+        data = {**a, **b, **c, **k, **d, **e, **f, **g}
 
         data['address'] = address
         data['total_supply'] = data['total_supply'] / (10**data['decimals'])
 
         token0 = Token.find(data['token0_address'])
         token1 = Token.find(data['token1_address'])
-        LOGGER.debug('Fetched %s an price is:', token0.symbol)
-        LOGGER.debug(token0.price)
-        LOGGER.debug('Fetched %s an price is:', token1.symbol)
-        LOGGER.debug(token1.price)
 
         data['reserve0'] = data['reserve0'] / (10**token0.decimals)
         data['reserve1'] = data['reserve1'] / (10**token1.decimals)

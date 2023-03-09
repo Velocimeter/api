@@ -58,16 +58,16 @@ class VeNFT(Model):
             calls.extend(EmissionReward.prepare_chain_calls(pair, address))
 
             for token_id in token_ids:
-                fee_calls.extend(
-                    FeeReward.prepare_chain_calls(pair, gauge, token_id)
-                )
+                # fee_calls.extend(
+                #     FeeReward.prepare_chain_calls(pair, gauge, token_id)
+                # )
                 bribe_calls.extend(
                     BribeReward.prepare_chain_calls(pair, gauge, token_id)
                 )
 
         t0 = datetime.utcnow()
         multi_data = Multicall(calls)()
-        multi_fees = Multicall(fee_calls)()
+        # multi_fees = Multicall(fee_calls)()
         multi_bribes = Multicall(bribe_calls)()
         tdelta = datetime.utcnow() - t0
 
@@ -88,7 +88,7 @@ class VeNFT(Model):
             venfts.append(cls.from_chain_calls(address, token_id, vdata))
 
         EmissionReward.from_chain_calls(address, multi_data)
-        FeeReward.from_chain_calls(address, multi_fees)
+        # FeeReward.from_chain_calls(address, multi_fees)
         BribeReward.from_chain_calls(address, multi_bribes)
 
         return venfts
