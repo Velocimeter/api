@@ -64,40 +64,41 @@ class Gauge(Model):
         """Fetches pair/pool gauge data from chain."""
         address = address.lower()
 
-        a = Call(
-                address,
-                'totalSupply()(uint256)',
-                [['total_supply', None]]
-            )()
-        b = Call(
-                address,
-                ['rewardRate(address)(uint256)', DEFAULT_TOKEN_ADDRESS],
-                [['reward_rate', None]]
-            )()
-        c = Call(
-                VOTER_ADDRESS,
-                ['external_bribes(address)(address)', address],
-                [['bribe_address', None]]
-            )()
-        # pair_gauge_multi = Multicall([
-        #     Call(
+        # a = Call(
         #         address,
         #         'totalSupply()(uint256)',
         #         [['total_supply', None]]
-        #     ),
-        #     Call(
+        #     )()
+        # b = Call(
         #         address,
         #         ['rewardRate(address)(uint256)', DEFAULT_TOKEN_ADDRESS],
         #         [['reward_rate', None]]
-        #     ),
-        #     Call(
+        #     )()
+        # c = Call(
         #         VOTER_ADDRESS,
         #         ['external_bribes(address)(address)', address],
         #         [['bribe_address', None]]
-        #     ),
-        # ])
+        #     )()
+        pair_gauge_multi = Multicall([
+            Call(
+                address,
+                'totalSupply()(uint256)',
+                [['total_supply', None]]
+            ),
+            Call(
+                address,
+                ['rewardRate(address)(uint256)', DEFAULT_TOKEN_ADDRESS],
+                [['reward_rate', None]]
+            ),
+            Call(
+                VOTER_ADDRESS,
+                ['external_bribes(address)(address)', address],
+                [['bribe_address', None]]
+            ),
+        ])
 
-        data = {**a, **b, **c}
+        # data = {**a, **b, **c}
+        data = pair_gauge_multi()
         data['decimals'] = cls.DEFAULT_DECIMALS
         data['total_supply'] = data['total_supply'] / data['decimals']
 
@@ -214,13 +215,13 @@ class Gauge(Model):
                     [[bribe_token_address, None]]
                 )
             )
-        _data = {}
-        for call in reward_calls:
-            _data = {**_data, **call()}
+        # _data = {}
+        # for call in reward_calls:
+        #     _data = {**_data, **call()}
 
-        # data = Multicall(reward_calls)()
+        data = Multicall(reward_calls)()
 
-        for (bribe_token_address, amount) in _data.items():
+        for (bribe_token_address, amount) in data.items():
             # Refresh cache if needed...
             token = Token.find(bribe_token_address)
 
