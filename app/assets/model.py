@@ -146,7 +146,7 @@ class Token(Model):
         price = 0
 
         for prices in sorted_pairs:
-            if prices['baseToken']['address'].lower() == self.address.lower():
+            if prices['baseToken']['address'].lower() == self.address.lower() and prices['baseToken']['symbol'] == self.symbol:
                 # To avoid this kek...
                 #   ValueError: could not convert string to float: '1,272.43'
                 price = str(prices.get('priceUsd') or 0).replace(',', '')
@@ -208,9 +208,8 @@ class Token(Model):
         if self.price == 0:
             self.price = self.chain_price_in_stables()
 
-        if self.price == 0:
-            self.price = self.debank_price_in_stables()
-
+        # if self.price == 0:
+        #     self.price = self.debank_price_in_stables()
         self.save()
 
     @classmethod
