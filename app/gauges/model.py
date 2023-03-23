@@ -95,6 +95,7 @@ class Gauge(Model):
         data['total_supply'] = data['total_supply'] / data['decimals']
 
         token = Token.find(DEFAULT_TOKEN_ADDRESS)
+        token._update_price()
         data['reward'] = (
             data['reward_rate'] / 10**token.decimals * cls.DAY_IN_SECONDS
         )
@@ -152,6 +153,7 @@ class Gauge(Model):
         )()
 
         token = Token.find(DEFAULT_TOKEN_ADDRESS)
+        token._update_price()
         votes = votes / 10**token.decimals
 
         gauge.apr = cls.rebase_apr()

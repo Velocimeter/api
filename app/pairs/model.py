@@ -155,10 +155,12 @@ class Pair(Model):
         data['address'] = address
         data['total_supply'] = data['total_supply'] / (10**data['decimals'])
 
-        token0 = Token.find(data['token0_address'])
-        token1 = Token.find(data['token1_address'])
-        token0._update_price()
-        token1._update_price()
+        _token0 = Token.find(data['token0_address'])
+        _token1 = Token.find(data['token1_address'])
+        _token0._update_price()
+        _token1._update_price()
+        token0 = _token0
+        token1 = _token1
 
         data['reserve0'] = data['reserve0'] / (10**token0.decimals)
         data['reserve1'] = data['reserve1'] / (10**token1.decimals)
