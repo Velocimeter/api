@@ -157,6 +157,8 @@ class Pair(Model):
 
         token0 = Token.find(data['token0_address'])
         token1 = Token.find(data['token1_address'])
+        token0._update_price()
+        token1._update_price()
 
         data['reserve0'] = data['reserve0'] / (10**token0.decimals)
         data['reserve1'] = data['reserve1'] / (10**token1.decimals)
