@@ -199,7 +199,13 @@ class Gauge(Model):
 
         for (bribe_token_address, amount) in data.items():
             # Refresh cache if needed...
+            price_updated_set = set()
             token = Token.find(bribe_token_address)
+
+            if token.address.lower() not in price_updated_set:
+                token._update_price()
+                price_updated_set.add(token.address.lower())
+            
 
             gauge.rewards[token.address] = amount / 10**token.decimals
 
