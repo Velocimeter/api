@@ -155,10 +155,18 @@ class Pair(Model):
         data['address'] = address
         data['total_supply'] = data['total_supply'] / (10**data['decimals'])
 
+        price_updated_set = set()
+
         _token0 = Token.find(data['token0_address'])
+        if _token0.address.lower() not in price_updated_set:
+            _token0._update_price()
+            price_updated_set.add(_token0.address.lower())
+        
         _token1 = Token.find(data['token1_address'])
-        _token0._update_price()
-        _token1._update_price()
+        if _token1.address.lower() not in price_updated_set:
+            _token1._update_price()
+            price_updated_set.add(_token1.address.lower())
+        
         token0 = _token0
         token1 = _token1
 
@@ -183,6 +191,7 @@ class Pair(Model):
         LOGGER.debug('Fetched %s:%s.', cls.__name__, pair.address)
 
         pair.syncup_gauge()
+        price_updated_set.add(DEFAULT_TOKEN_ADDRESS.lower()) # because in syncup gauge we update default token price already
 
         return pair
 

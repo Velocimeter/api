@@ -94,8 +94,13 @@ class Gauge(Model):
         data['decimals'] = cls.DEFAULT_DECIMALS
         data['total_supply'] = data['total_supply'] / data['decimals']
 
+        updated_default_token_price = False
+
         token = Token.find(DEFAULT_TOKEN_ADDRESS)
-        token._update_price()
+        if not updated_default_token_price:
+            token._update_price()
+            updated_default_token_price = True # in pairs model default token addresses is added to set of updated prices, because it is happened here
+        
         data['reward'] = (
             data['reward_rate'] / 10**token.decimals * cls.DAY_IN_SECONDS
         )
@@ -153,7 +158,7 @@ class Gauge(Model):
         )()
 
         token = Token.find(DEFAULT_TOKEN_ADDRESS)
-        token._update_price()
+
         votes = votes / 10**token.decimals
 
         gauge.apr = cls.rebase_apr()
