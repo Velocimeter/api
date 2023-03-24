@@ -4,6 +4,7 @@ import math
 
 from multicall import Call
 from app.canto_multicall import CantoMulticall as Multicall
+from app.token_prices_set import TokenPrices
 from walrus import Model, TextField, IntegerField, BooleanField, FloatField
 from web3.constants import ADDRESS_ZERO
 
@@ -155,17 +156,15 @@ class Pair(Model):
         data['address'] = address
         data['total_supply'] = data['total_supply'] / (10**data['decimals'])
 
-        price_updated_set = set()
-
         _token0 = Token.find(data['token0_address'])
-        if _token0.address.lower() not in price_updated_set:
+        if not TokenPrices.is_in_token_prices_set(_token0.address):
             _token0._update_price()
-            price_updated_set.add(_token0.address.lower())
+            TokenPrices.update_token_prices_set(_token0.address)
         
         _token1 = Token.find(data['token1_address'])
-        if _token1.address.lower() not in price_updated_set:
+        if not TokenPrices.is_in_token_prices_set(_token1.address):
             _token1._update_price()
-            price_updated_set.add(_token1.address.lower())
+            TokenPrices.update_token_prices_set(_token1.address)
         
         token0 = _token0
         token1 = _token1
@@ -191,7 +190,6 @@ class Pair(Model):
         LOGGER.debug('Fetched %s:%s.', cls.__name__, pair.address)
 
         pair.syncup_gauge()
-        price_updated_set.add(DEFAULT_TOKEN_ADDRESS.lower()) # because in syncup gauge we update default token price already
 
         return pair
 

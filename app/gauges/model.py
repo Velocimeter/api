@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from multicall import Call
 from app.canto_multicall import CantoMulticall as Multicall
+from app.token_prices_set import TokenPrices
 from walrus import Model, TextField, IntegerField, FloatField, HashField
 
 from web3.constants import ADDRESS_ZERO
@@ -94,12 +95,10 @@ class Gauge(Model):
         data['decimals'] = cls.DEFAULT_DECIMALS
         data['total_supply'] = data['total_supply'] / data['decimals']
 
-        updated_default_token_price = False
-
         token = Token.find(DEFAULT_TOKEN_ADDRESS)
-        if not updated_default_token_price:
+        if not TokenPrices.is_in_token_prices_set(token.address):
             token._update_price()
-            updated_default_token_price = True # in pairs model default token addresses is added to set of updated prices, because it is happened here
+            TokenPrices.update_token_prices_set(token.address)
         
         data['reward'] = (
             data['reward_rate'] / 10**token.decimals * cls.DAY_IN_SECONDS
@@ -199,12 +198,12 @@ class Gauge(Model):
 
         for (bribe_token_address, amount) in data.items():
             # Refresh cache if needed...
-            price_updated_set = set()
+
             token = Token.find(bribe_token_address)
 
-            if token.address.lower() not in price_updated_set:
+            if not TokenPrices.is_in_token_prices_set(token.address):
                 token._update_price()
-                price_updated_set.add(token.address.lower())
+                TokenPrices.update_token_prices_set(token.address)
             
 
             gauge.rewards[token.address] = amount / 10**token.decimals
