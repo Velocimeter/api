@@ -40,6 +40,7 @@ class Gauge(Model):
 
     # Bribes in the form of `token_address => token_amount`...
     rewards = HashField()
+    x_rewards = HashField()
     # Total Bribes Value
     tbv = FloatField(default=0.0)
     # Voting APR
@@ -301,7 +302,7 @@ class Gauge(Model):
                 TokenPrices.update_token_prices_set(token.address)
             
 
-            gauge.rewards[token.address] += amount / 10**token.decimals
+            gauge.x_rewards[token.address] = amount / 10**token.decimals
 
             if token.price:
                 gauge.tbv += amount / 10**token.decimals * token.price
