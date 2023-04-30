@@ -32,6 +32,7 @@ class Pairs(object):
                 data['gauge'] = gauge._data
                 data['gauge']['bribes'] = []
                 data['gauge']['x_bribes'] = []
+                data['gauge']['xx_bribes'] = []
 
                 for (token_addr, reward_ammount) in gauge.rewards:
                     data['gauge']['bribes'].append(
@@ -44,6 +45,15 @@ class Pairs(object):
                     )
                 for (token_addr, reward_ammount) in gauge.x_rewards:
                     data['gauge']['x_bribes'].append(
+                        dict(
+                            token=Token.find(token_addr)._data,
+                            reward_ammount=float(reward_ammount),
+                            # TODO: Backwards compat...
+                            rewardAmmount=float(reward_ammount)
+                        )
+                    )
+                for (token_addr, reward_ammount) in gauge.xx_rewards:
+                    data['gauge']['xx_bribes'].append(
                         dict(
                             token=Token.find(token_addr)._data,
                             reward_ammount=float(reward_ammount),

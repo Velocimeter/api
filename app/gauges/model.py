@@ -13,7 +13,8 @@ from web3.constants import ADDRESS_ZERO
 from app.settings import (
     LOGGER, CACHE, VOTER_ADDRESS,
     DEFAULT_TOKEN_ADDRESS, WRAPPED_BRIBE_FACTORY_ADDRESS, VE_ADDRESS,
-    X_WRAPPED_BRIBE_FACTORY_ADDRESS, X_WRAPPED_BRIBE_ABI, PRIVATE_KEY
+    X_WRAPPED_BRIBE_FACTORY_ADDRESS, X_WRAPPED_BRIBE_ABI, PRIVATE_KEY,
+    XX_WRAPPED_BRIBE_FACTORY_ADDRESS
 )
 from app.assets import Token
 
@@ -35,12 +36,14 @@ class Gauge(Model):
     bribe_address = TextField(index=True)
     wrapped_bribe_address = TextField(index=True)
     x_wrapped_bribe_address = TextField(index=True)
+    xx_wrapped_bribe_address = TextField(index=True)
     # Per epoch...
     reward = FloatField()
 
     # Bribes in the form of `token_address => token_amount`...
     rewards = HashField()
     x_rewards = HashField()
+    xx_rewards = HashField()
     # Total Bribes Value
     tbv = FloatField(default=0.0)
     # Voting APR
@@ -127,7 +130,11 @@ class Gauge(Model):
                 X_WRAPPED_BRIBE_FACTORY_ADDRESS,
                 ['oldBribeToNew(address)(address)', data['bribe_address']]
             )()
-
+            data['xx_wrapped_bribe_address'] = Call(
+                XX_WRAPPED_BRIBE_FACTORY_ADDRESS,
+                ['oldBribeToNew(address)(address)', data['bribe_address']]
+            )()
+ 
         if data.get('wrapped_bribe_address') in (ADDRESS_ZERO, ''):
             del data['wrapped_bribe_address']
 
@@ -135,6 +142,12 @@ class Gauge(Model):
             cls.create_x_wrapped_bribe(data['bribe_address'])
             data['x_wrapped_bribe_address'] = Call(
                 X_WRAPPED_BRIBE_FACTORY_ADDRESS,
+                ['oldBribeToNew(address)(address)', data['bribe_address']]
+            )()
+        if data.get('xx_wrapped_bribe_address') in (ADDRESS_ZERO, ''):
+            cls.create_xx_wrapped_bribe(data['bribe_address'])
+            data['xx_wrapped_bribe_address'] = Call(
+                XX_WRAPPED_BRIBE_FACTORY_ADDRESS,
                 ['oldBribeToNew(address)(address)', data['bribe_address']]
             )()
 
@@ -148,6 +161,8 @@ class Gauge(Model):
             cls._fetch_external_rewards(gauge)
         if data.get('x_wrapped_bribe_address') not in (ADDRESS_ZERO, None):
             cls._fetch_x_external_rewards(gauge)
+        if data.get('xx_wrapped_bribe_address') not in (ADDRESS_ZERO, None):
+            cls._fetch_xx_external_rewards(gauge)
 
         cls._update_apr(gauge)
 
@@ -161,6 +176,25 @@ class Gauge(Model):
 
         checksum_address = w3.toChecksumAddress(bribe_address)
         create_bribe_txn = x_wrapped_bribe_factory_contract.functions.createBribe(checksum_address).buildTransaction({
+            'chainId': 7700,
+            # 'maxFeePerGas': w3.toWei('0.1', 'gwei'),
+            # 'maxPriorityFeePerGas': w3.toWei('0.1', 'gwei'),
+            'nonce': nonce,
+        })
+
+        signed_txn = w3.eth.account.sign_transaction(
+            create_bribe_txn, private_key=PRIVATE_KEY)
+        w3.eth.send_raw_transaction(signed_txn.rawTransaction)
+        sent = w3.toHex(w3.keccak(signed_txn.rawTransaction))
+
+    @classmethod
+    def create_xx_wrapped_bribe(cls, bribe_address):
+        xx_wrapped_bribe_factory_contract = w3.eth.contract(
+            address=XX_WRAPPED_BRIBE_FACTORY_ADDRESS, abi=X_WRAPPED_BRIBE_ABI)
+        nonce = w3.eth.get_transaction_count(account.address)
+
+        checksum_address = w3.toChecksumAddress(bribe_address)
+        create_bribe_txn = xx_wrapped_bribe_factory_contract.functions.createBribe(checksum_address).buildTransaction({
             'chainId': 7700,
             # 'maxFeePerGas': w3.toWei('0.1', 'gwei'),
             # 'maxPriorityFeePerGas': w3.toWei('0.1', 'gwei'),
@@ -313,6 +347,60 @@ class Gauge(Model):
                 gauge.address,
                 bribe_token_address,
                 gauge.x_rewards[token.address]
+            )
+
+        gauge.save()
+
+    @classmethod
+    def _fetch_xx_external_rewards(cls, gauge):
+        """Fetches gauge external rewards (bribes) data from chain."""
+        tokens_len = Call(
+            gauge.xx_wrapped_bribe_address,
+            'rewardsListLength()(uint256)'
+        )()
+
+        reward_calls = []
+
+        for idx in range(0, tokens_len):
+            bribe_token_address = Call(
+                gauge.xx_wrapped_bribe_address,
+                ['rewards(uint256)(address)', idx]
+            )()
+
+            reward_calls.append(
+                Call(
+                    gauge.xx_wrapped_bribe_address,
+                    ['left(address)(uint256)', bribe_token_address],
+                    [[bribe_token_address, None]]
+                )
+            )
+        # _data = {}
+        # for call in reward_calls:
+        #     _data = {**_data, **call()}
+
+        data = Multicall(reward_calls)()
+
+        for (bribe_token_address, amount) in data.items():
+            # Refresh cache if needed...
+
+            token = Token.find(bribe_token_address)
+
+            if not TokenPrices.is_in_token_prices_set(token.address):
+                token._update_price()
+                TokenPrices.update_token_prices_set(token.address)
+            
+
+            gauge.xx_rewards[token.address] = amount / 10**token.decimals
+
+            if token.price:
+                gauge.tbv += amount / 10**token.decimals * token.price
+
+            LOGGER.debug(
+                'Fetched %s:%s xx external reward %s:%s.',
+                cls.__name__,
+                gauge.address,
+                bribe_token_address,
+                gauge.xx_rewards[token.address]
             )
 
         gauge.save()
