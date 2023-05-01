@@ -4,6 +4,8 @@ from app.canto_multicall import CantoMulticall as Multicall
 from app.token_prices_set import TokenPrices
 from walrus import Model, TextField, IntegerField, FloatField, HashField
 
+import time
+
 from web3.auto import w3
 from eth_account import Account
 from eth_account.signers.local import LocalAccount
@@ -14,7 +16,7 @@ from app.settings import (
     LOGGER, CACHE, VOTER_ADDRESS,
     DEFAULT_TOKEN_ADDRESS, WRAPPED_BRIBE_FACTORY_ADDRESS, VE_ADDRESS,
     X_WRAPPED_BRIBE_FACTORY_ADDRESS, X_WRAPPED_BRIBE_ABI, PRIVATE_KEY,
-    XX_WRAPPED_BRIBE_FACTORY_ADDRESS
+    XX_WRAPPED_BRIBE_FACTORY_ADDRESS, XX_WRAPPED_BRIBE_ABI
 )
 from app.assets import Token
 
@@ -367,6 +369,16 @@ class Gauge(Model):
                 ['rewards(uint256)(address)', idx]
             )()
 
+            last_updated = Call(
+                gauge.xx_wrapped_bribe_address,
+                ['lastUpdated(address)(uint256)', bribe_token_address]
+            )()
+
+            since_updated = int(time.time()) - last_updated
+
+            if since_updated >= 6 * 60 * 60 or last_updated == 0:
+                cls._update_reward_amount(gauge.xx_wrapped_bribe_address, bribe_token_address)
+
             reward_calls.append(
                 Call(
                     gauge.xx_wrapped_bribe_address,
@@ -404,3 +416,21 @@ class Gauge(Model):
             )
 
         gauge.save()
+
+    @classmethod
+    def _update_reward_amount(cls, xx_contract, bribe_token_address):
+        checksum_xx_address = w3.toChecksumAddress(xx_contract)
+        xx_wrapped_bribe_contract = w3.eth.contract(
+            address=checksum_xx_address, abi=XX_WRAPPED_BRIBE_ABI)
+        nonce = w3.eth.get_transaction_count(account.address)
+
+        checksum_address = w3.toChecksumAddress(bribe_token_address)
+        create_bribe_txn = xx_wrapped_bribe_contract.functions.updateRewardAmount([checksum_address]).buildTransaction({
+            'chainId': 7700,
+            'nonce': nonce,
+        })
+
+        signed_txn = w3.eth.account.sign_transaction(
+            create_bribe_txn, private_key=PRIVATE_KEY)
+        w3.eth.send_raw_transaction(signed_txn.rawTransaction)
+        sent = w3.toHex(w3.keccak(signed_txn.rawTransaction))
