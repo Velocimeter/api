@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from multicall import Call
 from app.canto_multicall import CantoMulticall as Multicall
-from app.token_prices_set import TokenPrices
 from walrus import Model, TextField, IntegerField, FloatField, HashField
 
 import time
@@ -111,9 +110,6 @@ class Gauge(Model):
         data['total_supply'] = data['total_supply'] / data['decimals']
 
         token = Token.find(DEFAULT_TOKEN_ADDRESS)
-        if not TokenPrices.is_in_token_prices_set(token.address):
-            token._update_price()
-            TokenPrices.update_token_prices_set(token.address)
         
         data['reward'] = (
             data['reward_rate'] / 10**token.decimals * cls.DAY_IN_SECONDS
@@ -159,10 +155,11 @@ class Gauge(Model):
         gauge = cls.create(address=address, **data)
         LOGGER.debug('Fetched %s:%s.', cls.__name__, address)
 
-        if data.get('wrapped_bribe_address') not in (ADDRESS_ZERO, None):
-            cls._fetch_external_rewards(gauge)
-        if data.get('x_wrapped_bribe_address') not in (ADDRESS_ZERO, None):
-            cls._fetch_x_external_rewards(gauge)
+        # Updater doesnt need other rewards
+        # if data.get('wrapped_bribe_address') not in (ADDRESS_ZERO, None):
+        #     cls._fetch_external_rewards(gauge)
+        # if data.get('x_wrapped_bribe_address') not in (ADDRESS_ZERO, None):
+        #     cls._fetch_x_external_rewards(gauge)
         if data.get('xx_wrapped_bribe_address') not in (ADDRESS_ZERO, None):
             cls._fetch_xx_external_rewards(gauge)
 
@@ -278,12 +275,7 @@ class Gauge(Model):
             # Refresh cache if needed...
 
             token = Token.find(bribe_token_address)
-
-            if not TokenPrices.is_in_token_prices_set(token.address):
-                token._update_price()
-                TokenPrices.update_token_prices_set(token.address)
             
-
             gauge.rewards[token.address] = amount / 10**token.decimals
 
             if token.price:
@@ -332,12 +324,7 @@ class Gauge(Model):
             # Refresh cache if needed...
 
             token = Token.find(bribe_token_address)
-
-            if not TokenPrices.is_in_token_prices_set(token.address):
-                token._update_price()
-                TokenPrices.update_token_prices_set(token.address)
             
-
             gauge.x_rewards[token.address] = amount / 10**token.decimals
 
             if token.price:
@@ -369,6 +356,18 @@ class Gauge(Model):
                 ['rewards(uint256)(address)', idx]
             )()
 
+            left = Call(
+                gauge.xx_wrapped_bribe_address,
+                ['left(address)(uint256)', bribe_token_address]
+            )()
+
+            balance_of = Call(
+                bribe_token_address,
+                ['balanceOf(address)(uint256)', gauge.xx_wrapped_bribe_address]
+            )()
+
+            difference = balance_of - left
+
             last_updated = Call(
                 gauge.xx_wrapped_bribe_address,
                 ['lastUpdated(address)(uint256)', bribe_token_address]
@@ -376,44 +375,47 @@ class Gauge(Model):
 
             since_updated = int(time.time()) - last_updated
 
-            if since_updated >= 6 * 60 * 60 or last_updated == 0:
+            if (since_updated >= 6 * 60 * 60 or last_updated == 0) and difference > 0:
                 cls._update_reward_amount(gauge.xx_wrapped_bribe_address, bribe_token_address)
+                LOGGER.debug('Updated %s:%s xx external reward %s:%s.',
+                cls.__name__,
+                gauge.address,
+                bribe_token_address,
+                gauge.xx_wrapped_bribe_address)
 
-            reward_calls.append(
-                Call(
-                    gauge.xx_wrapped_bribe_address,
-                    ['left(address)(uint256)', bribe_token_address],
-                    [[bribe_token_address, None]]
-                )
-            )
+            LOGGER.debug('Did NOT updated %s:%s xx external reward %s:%s.',
+                cls.__name__,
+                gauge.address,
+                bribe_token_address,
+                gauge.xx_wrapped_bribe_address)
         # _data = {}
         # for call in reward_calls:
         #     _data = {**_data, **call()}
 
-        data = Multicall(reward_calls)()
+        # data = Multicall(reward_calls)()
 
-        for (bribe_token_address, amount) in data.items():
-            # Refresh cache if needed...
+        # for (bribe_token_address, amount) in data.items():
+        #     # Refresh cache if needed...
 
-            token = Token.find(bribe_token_address)
+        #     token = Token.find(bribe_token_address)
 
-            if not TokenPrices.is_in_token_prices_set(token.address):
-                token._update_price()
-                TokenPrices.update_token_prices_set(token.address)
+        #     if not TokenPrices.is_in_token_prices_set(token.address):
+        #         token._update_price()
+        #         TokenPrices.update_token_prices_set(token.address)
             
 
-            gauge.xx_rewards[token.address] = amount / 10**token.decimals
+        #     gauge.xx_rewards[token.address] = amount / 10**token.decimals
 
-            if token.price:
-                gauge.tbv += amount / 10**token.decimals * token.price
+        #     if token.price:
+        #         gauge.tbv += amount / 10**token.decimals * token.price
 
-            LOGGER.debug(
-                'Fetched %s:%s xx external reward %s:%s.',
-                cls.__name__,
-                gauge.address,
-                bribe_token_address,
-                gauge.xx_rewards[token.address]
-            )
+        #     LOGGER.debug(
+        #         'Fetched %s:%s xx external reward %s:%s.',
+        #         cls.__name__,
+        #         gauge.address,
+        #         bribe_token_address,
+        #         gauge.xx_rewards[token.address]
+        #     )
 
         gauge.save()
 

@@ -4,7 +4,6 @@ import math
 
 from multicall import Call
 from app.canto_multicall import CantoMulticall as Multicall
-from app.token_prices_set import TokenPrices
 from walrus import Model, TextField, IntegerField, BooleanField, FloatField
 from web3.constants import ADDRESS_ZERO
 
@@ -156,18 +155,8 @@ class Pair(Model):
         data['address'] = address
         data['total_supply'] = data['total_supply'] / (10**data['decimals'])
 
-        _token0 = Token.find(data['token0_address'])
-        if not TokenPrices.is_in_token_prices_set(_token0.address):
-            _token0._update_price()
-            TokenPrices.update_token_prices_set(_token0.address)
-        
-        _token1 = Token.find(data['token1_address'])
-        if not TokenPrices.is_in_token_prices_set(_token1.address):
-            _token1._update_price()
-            TokenPrices.update_token_prices_set(_token1.address)
-        
-        token0 = _token0
-        token1 = _token1
+        token0 = Token.find(data['token0_address']) 
+        token1 = Token.find(data['token1_address'])
 
         data['reserve0'] = data['reserve0'] / (10**token0.decimals)
         data['reserve1'] = data['reserve1'] / (10**token1.decimals)
