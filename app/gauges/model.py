@@ -284,9 +284,6 @@ class Gauge(Model):
 
             gauge.rewards[token.address] = amount / 10**token.decimals
 
-            if token.price:
-                gauge.tbv += amount / 10**token.decimals * token.price
-
             LOGGER.debug(
                 'Fetched %s:%s external reward %s:%s.',
                 cls.__name__,
