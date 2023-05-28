@@ -11,7 +11,7 @@ from web3.constants import ADDRESS_ZERO
 from app.assets import Token
 from app.gauges import Gauge
 from app.settings import (
-    LOGGER, CACHE, FACTORY_ADDRESS, VOTER_ADDRESS, DEFAULT_TOKEN_ADDRESS
+    LOGGER, CACHE, FACTORY_ADDRESS, VOTER_ADDRESS, DEFAULT_TOKEN_ADDRESS, OPTION_TOKEN_ADDRESS
 )
 
 
@@ -31,6 +31,7 @@ class Pair(Model):
     gauge_address = TextField(index=True)
     tvl = FloatField(default=0)
     apr = FloatField(default=0)
+    oblotr_apr = FloatField(default=0)
 
     # TODO: Backwards compat. Remove once no longer needed...
     isStable = BooleanField()
@@ -70,9 +71,18 @@ class Pair(Model):
         token = Token.find(DEFAULT_TOKEN_ADDRESS)
         token_price = token.chain_price_in_stables()
 
+        option_token = Token.find(OPTION_TOKEN_ADDRESS)
+        if not TokenPrices.is_in_token_prices_set(option_token.address):
+            option_token._update_price()
+            TokenPrices.update_token_prices_set(option_token.address)
+        
+        option_token_price = option_token.price
+
         daily_apr = (gauge.reward * token_price) / self.tvl * 100
+        oblotr_daily_apr = (gauge.oblotr_reward * option_token_price) / self.tvl * 100
 
         self.apr = daily_apr * 365
+        self.oblotr_apr = oblotr_daily_apr * 365
         self.save()
 
     @classmethod

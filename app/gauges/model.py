@@ -14,13 +14,14 @@ from app.settings import (
     LOGGER, CACHE, VOTER_ADDRESS,
     DEFAULT_TOKEN_ADDRESS, WRAPPED_BRIBE_FACTORY_ADDRESS, VE_ADDRESS,
     X_WRAPPED_BRIBE_FACTORY_ADDRESS, X_WRAPPED_BRIBE_ABI, PRIVATE_KEY,
-    XX_WRAPPED_BRIBE_FACTORY_ADDRESS
+    XX_WRAPPED_BRIBE_FACTORY_ADDRESS, OPTION_TOKEN_ADDRESS
 )
 from app.assets import Token
 
 # set up private key to web3
 account: LocalAccount = Account.from_key(PRIVATE_KEY)
 w3.middleware_onion.add(construct_sign_and_send_raw_middleware(account))
+
 
 class Gauge(Model):
     """Gauge model."""
@@ -39,6 +40,7 @@ class Gauge(Model):
     xx_wrapped_bribe_address = TextField(index=True)
     # Per epoch...
     reward = FloatField()
+    oblotr_reward = FloatField()
 
     # Bribes in the form of `token_address => token_amount`...
     rewards = HashField()
@@ -97,6 +99,11 @@ class Gauge(Model):
                 [['reward_rate', None]]
             ),
             Call(
+                address,
+                ['rewardRate(address)(uint256)', OPTION_TOKEN_ADDRESS],
+                [['oblotr_reward_rate', None]]
+            ),
+            Call(
                 VOTER_ADDRESS,
                 ['external_bribes(address)(address)', address],
                 [['bribe_address', None]]
@@ -112,9 +119,12 @@ class Gauge(Model):
         if not TokenPrices.is_in_token_prices_set(token.address):
             token._update_price()
             TokenPrices.update_token_prices_set(token.address)
-        
+
         data['reward'] = (
             data['reward_rate'] / 10**token.decimals * cls.DAY_IN_SECONDS
+        )
+        data['oblotr_reward'] = (
+            data['oblotr_reward_rate'] / 10**token.decimals * cls.DAY_IN_SECONDS
         )
 
         # TODO: Remove once no longer needed...
@@ -134,7 +144,7 @@ class Gauge(Model):
                 XX_WRAPPED_BRIBE_FACTORY_ADDRESS,
                 ['oldBribeToNew(address)(address)', data['bribe_address']]
             )()
- 
+
         if data.get('wrapped_bribe_address') in (ADDRESS_ZERO, ''):
             del data['wrapped_bribe_address']
 
@@ -167,7 +177,7 @@ class Gauge(Model):
         cls._update_apr(gauge)
 
         return gauge
-    
+
     @classmethod
     def create_x_wrapped_bribe(cls, bribe_address):
         x_wrapped_bribe_factory_contract = w3.eth.contract(
@@ -280,7 +290,6 @@ class Gauge(Model):
             if not TokenPrices.is_in_token_prices_set(token.address):
                 token._update_price()
                 TokenPrices.update_token_prices_set(token.address)
-            
 
             gauge.rewards[token.address] = amount / 10**token.decimals
 
@@ -331,7 +340,6 @@ class Gauge(Model):
             if not TokenPrices.is_in_token_prices_set(token.address):
                 token._update_price()
                 TokenPrices.update_token_prices_set(token.address)
-            
 
             gauge.x_rewards[token.address] = amount / 10**token.decimals
 
@@ -385,7 +393,6 @@ class Gauge(Model):
             if not TokenPrices.is_in_token_prices_set(token.address):
                 token._update_price()
                 TokenPrices.update_token_prices_set(token.address)
-            
 
             gauge.xx_rewards[token.address] = amount / 10**token.decimals
 

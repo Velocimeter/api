@@ -42,6 +42,7 @@ LOGGER.setLevel(os.getenv('LOGGING_LEVEL', 'DEBUG'))
 # Tokenlists are split with a pipe char (unlikely to be used in URIs)
 TOKENLISTS = os.getenv('TOKENLISTS', '').split('|')
 DEFAULT_TOKEN_ADDRESS = os.getenv('DEFAULT_TOKEN_ADDRESS').lower()
+OPTION_TOKEN_ADDRESS = os.getenv('OPTION_TOKEN_ADDRESS').lower()
 STABLE_TOKEN_ADDRESS = os.getenv('STABLE_TOKEN_ADDRESS').lower()
 ROUTE_TOKEN_ADDRESSES = \
     os.getenv('ROUTE_TOKEN_ADDRESSES', '').lower().split(',')
