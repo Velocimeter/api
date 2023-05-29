@@ -11,9 +11,8 @@ from web3.constants import ADDRESS_ZERO
 from app.assets import Token
 from app.gauges import Gauge
 from app.settings import (
-    LOGGER, CACHE, FACTORY_ADDRESS, VOTER_ADDRESS, DEFAULT_TOKEN_ADDRESS, OPTION_TOKEN_ADDRESS
+    LOGGER, CACHE, FACTORY_ADDRESS, VOTER_ADDRESS, DEFAULT_TOKEN_ADDRESS
 )
-
 
 class Pair(Model):
     """Liquidity pool pairs model."""
@@ -71,12 +70,13 @@ class Pair(Model):
         token = Token.find(DEFAULT_TOKEN_ADDRESS)
         token_price = token.chain_price_in_stables()
 
-        option_token = Token.find(OPTION_TOKEN_ADDRESS)
-        if not TokenPrices.is_in_token_prices_set(option_token.address):
-            option_token._update_price()
-            TokenPrices.update_token_prices_set(option_token.address)
+        BLOTR_TOKEN_ADDRESS = '0xFf0BAF077e8035A3dA0dD2abeCECFbd98d8E63bE'
+        blotr_token = Token.find(BLOTR_TOKEN_ADDRESS)
+        if not TokenPrices.is_in_token_prices_set(blotr_token.address):
+            blotr_token._update_price()
+            TokenPrices.update_token_prices_set(blotr_token.address)
         
-        option_token_price = option_token.price
+        option_token_price = blotr_token.price / 2
 
         daily_apr = (gauge.reward * token_price) / self.tvl * 100
         oblotr_daily_apr = (gauge.oblotr_reward * option_token_price) / self.tvl * 100
