@@ -11,7 +11,7 @@ from web3.constants import ADDRESS_ZERO
 from app.assets import Token
 from app.gauges import Gauge
 from app.settings import (
-    LOGGER, CACHE, FACTORY_ADDRESS, VOTER_ADDRESS, DEFAULT_TOKEN_ADDRESS
+    LOGGER, CACHE, FACTORY_ADDRESS, VOTER_ADDRESS, DEFAULT_TOKEN_ADDRESS, OPTION_TOKEN_ADDRESS
 )
 
 class Pair(Model):
@@ -68,18 +68,18 @@ class Pair(Model):
             return
 
         token = Token.find(DEFAULT_TOKEN_ADDRESS)
-        token_price = token.chain_price_in_stables()
+        if not TokenPrices.is_in_token_prices_set(token.address):
+            token._update_price()
+            TokenPrices.update_token_prices_set(token.address)
 
-        BLOTR_TOKEN_ADDRESS = '0xFf0BAF077e8035A3dA0dD2abeCECFbd98d8E63bE'
-        blotr_token = Token.find(BLOTR_TOKEN_ADDRESS)
-        if not TokenPrices.is_in_token_prices_set(blotr_token.address):
-            blotr_token._update_price()
-            TokenPrices.update_token_prices_set(blotr_token.address)
-        
-        option_token_price = blotr_token.price / 2
+        oblotr_token = Token.find(OPTION_TOKEN_ADDRESS)
+        if not TokenPrices.is_in_token_prices_set(oblotr_token.address):
+            oblotr_token._update_price()
+            TokenPrices.update_token_prices_set(oblotr_token.address)
+    
 
-        daily_apr = (gauge.reward * token_price) / self.tvl * 100
-        oblotr_daily_apr = (gauge.oblotr_reward * option_token_price) / self.tvl * 100
+        daily_apr = (gauge.reward * token.price) / self.tvl * 100
+        oblotr_daily_apr = (gauge.oblotr_reward * oblotr_token.price) / self.tvl * 100
 
         self.apr = daily_apr * 365
         self.oblotr_apr = oblotr_daily_apr * 365
