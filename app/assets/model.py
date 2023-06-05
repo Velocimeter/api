@@ -47,7 +47,9 @@ class Token(Model):
                         '10': 'optimism',
                         '137': 'polygon',
                         '42220': 'celo',
-                        '7700': 'canto'}
+                        '7700': 'canto',
+                        '369': 'pulse'
+                        }
 
     def debank_price_in_stables(self):
         """Returns the price quoted from DeBank"""
@@ -87,7 +89,7 @@ class Token(Model):
             chain_name = self.CHAIN_NAMES[str(self.nativeChainId)]
             chain_token = chain_name + ':' + self.nativeChainAddress.lower()
         else:
-            chain_token = 'canto:' + self.address.lower()
+            chain_token = 'pulse:' + self.address.lower()
 
         res = requests.get(self.DEFILLAMA_ENDPOINT + chain_token).json()
         coins = res.get('coins', {})
