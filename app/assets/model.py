@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from multicall import Call
-from app.canto_multicall import CantoMulticall as Multicall
+from app.pulse_multicall import PulseMulticall as Multicall
 import requests
 import requests.exceptions
 from walrus import Model, TextField, IntegerField, FloatField

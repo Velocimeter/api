@@ -57,10 +57,6 @@ VOTER_ADDRESS = os.getenv('VOTER_ADDRESS')
 ROUTER_ADDRESS = os.getenv('ROUTER_ADDRESS')
 VE_ADDRESS = os.getenv('VE_ADDRESS')
 REWARDS_DIST_ADDRESS = os.getenv('REWARDS_DIST_ADDRESS')
-WRAPPED_BRIBE_FACTORY_ADDRESS = os.getenv('WRAPPED_BRIBE_FACTORY_ADDRESS')
-X_WRAPPED_BRIBE_FACTORY_ADDRESS = os.getenv('X_WRAPPED_BRIBE_FACTORY_ADDRESS')
-XX_WRAPPED_BRIBE_FACTORY_ADDRESS = os.getenv('XX_WRAPPED_BRIBE_FACTORY_ADDRESS')
-X_WRAPPED_BRIBE_ABI = json.loads('[{"inputs":[{"internalType":"address","name":"_voter","type":"address"},{"internalType":"uint256","name":"_csrNftId","type":"uint256"}],"stateMutability":"nonpayable","type":"constructor"},{"inputs":[],"name":"TURNSTILE","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"existing_bribe","type":"address"}],"name":"createBribe","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"csrNftId","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"last_bribe","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"oldBribeToNew","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"voter","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"}]')
 
 # Seconds to wait before running the chain syncup. `0` disables it!
 SYNC_WAIT_SECONDS = int(os.getenv('SYNC_WAIT_SECONDS', 0))
