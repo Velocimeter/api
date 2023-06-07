@@ -40,10 +40,7 @@ class Gauge(Model):
     xx_wrapped_bribe_address = TextField(index=True)
     # Per epoch...
     reward = FloatField()
-    default_left = FloatField()
-
     oblotr_reward = FloatField()
-    option_left = FloatField()
 
     # Bribes in the form of `token_address => token_amount`...
     rewards = HashField()
@@ -103,18 +100,8 @@ class Gauge(Model):
             ),
             Call(
                 address,
-                ['left(address)(uint256)', OPTION_TOKEN_ADDRESS],
-                [['default_left', None]]
-            ),
-            Call(
-                address,
                 ['rewardRate(address)(uint256)', OPTION_TOKEN_ADDRESS],
                 [['oblotr_reward_rate', None]]
-            ),
-            Call(
-                address,
-                ['left(address)(uint256)', OPTION_TOKEN_ADDRESS],
-                [['option_left', None]]
             ),
             Call(
                 VOTER_ADDRESS,
@@ -136,7 +123,6 @@ class Gauge(Model):
         data['reward'] = (
             data['reward_rate'] / 10**token.decimals * cls.DAY_IN_SECONDS
         )
-
         data['oblotr_reward'] = (
             data['oblotr_reward_rate'] / 10**token.decimals * cls.DAY_IN_SECONDS
         )
