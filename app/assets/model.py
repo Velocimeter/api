@@ -11,7 +11,7 @@ from app.token_prices_set import TokenPrices
 
 from app.settings import (
     LOGGER, CACHE, TOKENLISTS, ROUTER_ADDRESS, STABLE_TOKEN_ADDRESS,
-    IGNORED_TOKEN_ADDRESSES, OPTION_TOKEN_ADDRESS
+    IGNORED_TOKEN_ADDRESSES, OPTION_TOKEN_ADDRESS, DEFAULT_TOKEN_ADDRESS
 )
 
 
@@ -207,8 +207,7 @@ class Token(Model):
     def _update_price(self):
         """Updates the token price in USD from different sources."""
         if self.address == OPTION_TOKEN_ADDRESS:
-            BLOTR_TOKEN_ADDRESS = '0xFf0BAF077e8035A3dA0dD2abeCECFbd98d8E63bE'
-            blotr_token = Token.find(BLOTR_TOKEN_ADDRESS)
+            blotr_token = Token.find(DEFAULT_TOKEN_ADDRESS)
             if not TokenPrices.is_in_token_prices_set(blotr_token.address):
                 blotr_token._update_price()
                 TokenPrices.update_token_prices_set(blotr_token.address)
