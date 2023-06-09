@@ -78,10 +78,10 @@ class Pair(Model):
             TokenPrices.update_token_prices_set(oblotr_token.address)
     
 
-        daily_apr = (gauge.reward * token.price) / self.tvl * 100
+        daily_apr = (gauge.reward * (token.price - oblotr_token.price)) / self.tvl * 100
         oblotr_daily_apr = (gauge.oblotr_reward * oblotr_token.price) / self.tvl * 100
 
-        self.apr = daily_apr * 365 / 2
+        self.apr = daily_apr * 365
         self.oblotr_apr = oblotr_daily_apr * 365
         self.save()
 

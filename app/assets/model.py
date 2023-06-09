@@ -49,7 +49,7 @@ class Token(Model):
                         '42220': 'celo',
                         '7700': 'canto',
                         '369': 'pulse'
-                        }
+                   }
 
     def debank_price_in_stables(self):
         """Returns the price quoted from DeBank"""
@@ -211,7 +211,8 @@ class Token(Model):
             if not TokenPrices.is_in_token_prices_set(blotr_token.address):
                 blotr_token._update_price()
                 TokenPrices.update_token_prices_set(blotr_token.address)
-            self.price = blotr_token.price / 2
+            discount = self.check_option_discount(OPTION_TOKEN_ADDRESS)
+            self.price = blotr_token.price * discount / 100
             self.save()
             return
 
@@ -225,11 +226,24 @@ class Token(Model):
         self.save()
 
     @classmethod
+    def check_option_discount(cls, address):
+        """Checks discount on Option Token."""
+        address = address.lower()
+
+        discount = Call(
+            address,
+            [
+                'discount()(uint256)'
+            ]
+        )()
+        return discount
+
+    @classmethod
     def from_chain(cls, address, logoURI=None):
         address = address.lower()
 
         """Fetches and returns a token from chain."""
-        
+
         # a=    Call(address, ['name()(string)'], [['name', None]])()
         # b=    Call(address, ['symbol()(string)'], [['symbol', None]])()
         # c=    Call(address, ['decimals()(uint8)'], [['decimals', None]])()
