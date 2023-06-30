@@ -14,6 +14,7 @@ from app.settings import (
     LOGGER, CACHE, FACTORY_ADDRESS, VOTER_ADDRESS, DEFAULT_TOKEN_ADDRESS, OPTION_TOKEN_ADDRESS
 )
 
+
 class Pair(Model):
     """Liquidity pool pairs model."""
     __database__ = CACHE
@@ -76,10 +77,10 @@ class Pair(Model):
         if not TokenPrices.is_in_token_prices_set(oblotr_token.address):
             oblotr_token._update_price()
             TokenPrices.update_token_prices_set(oblotr_token.address)
-    
 
-        daily_apr = (gauge.reward * (token.price - oblotr_token.price)) / self.tvl * 100
-        oblotr_daily_apr = (gauge.oblotr_reward * oblotr_token.price) / self.tvl * 100
+        daily_apr = (gauge.reward * (token.price)) / self.tvl * 100
+        oblotr_daily_apr = (gauge.oblotr_reward *
+                            oblotr_token.price) / self.tvl * 100
 
         self.apr = daily_apr * 365
         self.oblotr_apr = oblotr_daily_apr * 365
@@ -170,12 +171,12 @@ class Pair(Model):
         if not TokenPrices.is_in_token_prices_set(_token0.address):
             _token0._update_price()
             TokenPrices.update_token_prices_set(_token0.address)
-        
+
         _token1 = Token.find(data['token1_address'])
         if not TokenPrices.is_in_token_prices_set(_token1.address):
             _token1._update_price()
             TokenPrices.update_token_prices_set(_token1.address)
-        
+
         token0 = _token0
         token1 = _token1
 
