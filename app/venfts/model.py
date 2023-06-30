@@ -3,7 +3,7 @@
 from datetime import datetime
 
 from multicall import Call
-from app.pulse_multicall import PulseMulticall as Multicall
+from app.fantom_multicall import FantomMulticall as Multicall
 from walrus import Model, TextField, IntegerField, DateTimeField
 
 from app.rewards import BribeReward, EmissionReward, FeeReward

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from multicall import Call
-from app.pulse_multicall import PulseMulticall as Multicall
+from app.fantom_multicall import FantomMulticall as Multicall
 import requests
 import requests.exceptions
 from walrus import Model, TextField, IntegerField, FloatField
@@ -89,7 +89,7 @@ class Token(Model):
             chain_name = self.CHAIN_NAMES[str(self.nativeChainId)]
             chain_token = chain_name + ':' + self.nativeChainAddress.lower()
         else:
-            chain_token = 'pulse:' + self.address.lower()
+            chain_token = 'fantom:' + self.address.lower()
 
         res = requests.get(self.DEFILLAMA_ENDPOINT + chain_token).json()
         coins = res.get('coins', {})

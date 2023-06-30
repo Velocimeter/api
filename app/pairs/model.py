@@ -3,7 +3,7 @@
 import math
 
 from multicall import Call
-from app.pulse_multicall import PulseMulticall as Multicall
+from app.fantom_multicall import FantomMulticall as Multicall
 from app.token_prices_set import TokenPrices
 from walrus import Model, TextField, IntegerField, BooleanField, FloatField
 from web3.constants import ADDRESS_ZERO

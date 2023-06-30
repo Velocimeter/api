@@ -10,15 +10,15 @@ from multicall.utils import (chain_id)
 
 # i need to extend constants to add the multicall address for my network and override MultiCall class to use my multicall address
 
-PULSECHAIN_MULTICALL3_ADDRESS: Dict[int, str] = {
-    369: '0xca11bde05977b3631167028862be2a173976ca11',
+FANTOM_MULTICALL3_ADDRESS: Dict[int, str] = {
+    250: '0xca11bde05977b3631167028862be2a173976ca11',
 }
 
 UPDATED_MULTICALL3_ADDRESSES = {
-    **MULTICALL3_ADDRESSES, **PULSECHAIN_MULTICALL3_ADDRESS}
+    **MULTICALL3_ADDRESSES, **FANTOM_MULTICALL3_ADDRESS}
 
 
-class PulseMulticall(Multicall):
+class FantomMulticall(Multicall):
     def __init__(
         self,
         calls: List[Call],
