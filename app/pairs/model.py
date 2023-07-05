@@ -11,12 +11,18 @@ from web3.constants import ADDRESS_ZERO
 from app.assets import Token
 from app.gauges import Gauge
 from app.settings import (
-    LOGGER, CACHE, FACTORY_ADDRESS, VOTER_ADDRESS, DEFAULT_TOKEN_ADDRESS, OPTION_TOKEN_ADDRESS
+    LOGGER,
+    CACHE,
+    FACTORY_ADDRESS,
+    VOTER_ADDRESS,
+    DEFAULT_TOKEN_ADDRESS,
+    OPTION_TOKEN_ADDRESS,
 )
 
 
 class Pair(Model):
     """Liquidity pool pairs model."""
+
     __database__ = CACHE
 
     address = TextField(primary_key=True)
@@ -78,13 +84,48 @@ class Pair(Model):
             oblotr_token._update_price()
             TokenPrices.update_token_prices_set(oblotr_token.address)
 
-        daily_apr = (gauge.reward * (token.price)) / self.tvl * 100
-        oblotr_daily_apr = (gauge.oblotr_reward *
-                            oblotr_token.price) / self.tvl * 100
+        is_option_emission = self._is_option_emission(gauge.address)
+
+        if is_option_emission:
+            daily_apr = (
+                (gauge.reward * (token.price - oblotr_token.price)) / self.tvl * 100
+            )
+        else:
+            daily_apr = (gauge.reward * token.price) / self.tvl * 100
+
+        oblotr_daily_apr = (gauge.oblotr_reward * oblotr_token.price) / self.tvl * 100
 
         self.apr = daily_apr * 365
         self.oblotr_apr = oblotr_daily_apr * 365
         self.save()
+
+    def _is_option_emission(self, gauge_address):
+        """Checks if the pool is an option emission pool."""
+
+        minter_role = Call(OPTION_TOKEN_ADDRESS, ["MINTER_ROLE()(bytes32)"])()
+
+        check_data_multicall = Multicall(
+            [
+                Call(
+                    OPTION_TOKEN_ADDRESS,
+                    [
+                        "hasRole(bytes32,address)(bool)",
+                        minter_role,
+                        gauge_address,
+                    ],
+                    [["has_role", None]],
+                ),
+                Call(
+                    gauge_address,
+                    ["oFlow()(address)"],
+                    [["option", None]],
+                ),
+            ]
+        )
+
+        check_data = check_data_multicall()
+
+        return check_data["has_role"] and check_data["option"] != ADDRESS_ZERO
 
     @classmethod
     def find(cls, address):
@@ -100,19 +141,19 @@ class Pair(Model):
     @classmethod
     def chain_addresses(cls):
         """Fetches pairs/pools from chain."""
-        pairs_count = Call(FACTORY_ADDRESS, 'allPairsLength()(uint256)')()
+        pairs_count = Call(FACTORY_ADDRESS, "allPairsLength()(uint256)")()
         # arr = []
         # for idx in range(0, pairs_count):
         #     arr.append(Call(FACTORY_ADDRESS, ['allPairs(uint256)(address)', idx])())
 
-        pairs_multi = Multicall([
-            Call(
-                FACTORY_ADDRESS,
-                ['allPairs(uint256)(address)', idx],
-                [[idx, None]]
-            )
-            for idx in range(0, pairs_count)
-        ])
+        pairs_multi = Multicall(
+            [
+                Call(
+                    FACTORY_ADDRESS, ["allPairs(uint256)(address)", idx], [[idx, None]]
+                )
+                for idx in range(0, pairs_count)
+            ]
+        )
 
         return list(pairs_multi().values())
 
@@ -139,40 +180,38 @@ class Pair(Model):
         #         [['gauge_address', None]]
         #     )()
 
-        pair_multi = Multicall([
-            Call(
-                address,
-                'getReserves()(uint256,uint256)',
-                [['reserve0', None], ['reserve1', None]]
-            ),
-            Call(address, 'token0()(address)', [['token0_address', None]]),
-            Call(address, 'token1()(address)', [['token1_address', None]]),
-            Call(
-                address,
-                'totalSupply()(uint256)',
-                [['total_supply', None]]
-            ),
-            Call(address, 'symbol()(string)', [['symbol', None]]),
-            Call(address, 'decimals()(uint8)', [['decimals', None]]),
-            Call(address, 'stable()(bool)', [['stable', None]]),
-            Call(
-                VOTER_ADDRESS,
-                ['gauges(address)(address)', address],
-                [['gauge_address', None]]
-            )
-        ])
+        pair_multi = Multicall(
+            [
+                Call(
+                    address,
+                    "getReserves()(uint256,uint256)",
+                    [["reserve0", None], ["reserve1", None]],
+                ),
+                Call(address, "token0()(address)", [["token0_address", None]]),
+                Call(address, "token1()(address)", [["token1_address", None]]),
+                Call(address, "totalSupply()(uint256)", [["total_supply", None]]),
+                Call(address, "symbol()(string)", [["symbol", None]]),
+                Call(address, "decimals()(uint8)", [["decimals", None]]),
+                Call(address, "stable()(bool)", [["stable", None]]),
+                Call(
+                    VOTER_ADDRESS,
+                    ["gauges(address)(address)", address],
+                    [["gauge_address", None]],
+                ),
+            ]
+        )
 
         data = pair_multi()
 
-        data['address'] = address
-        data['total_supply'] = data['total_supply'] / (10**data['decimals'])
+        data["address"] = address
+        data["total_supply"] = data["total_supply"] / (10 ** data["decimals"])
 
-        _token0 = Token.find(data['token0_address'])
+        _token0 = Token.find(data["token0_address"])
         if not TokenPrices.is_in_token_prices_set(_token0.address):
             _token0._update_price()
             TokenPrices.update_token_prices_set(_token0.address)
 
-        _token1 = Token.find(data['token1_address'])
+        _token1 = Token.find(data["token1_address"])
         if not TokenPrices.is_in_token_prices_set(_token1.address):
             _token1._update_price()
             TokenPrices.update_token_prices_set(_token1.address)
@@ -180,25 +219,25 @@ class Pair(Model):
         token0 = _token0
         token1 = _token1
 
-        data['reserve0'] = data['reserve0'] / (10**token0.decimals)
-        data['reserve1'] = data['reserve1'] / (10**token1.decimals)
+        data["reserve0"] = data["reserve0"] / (10**token0.decimals)
+        data["reserve1"] = data["reserve1"] / (10**token1.decimals)
 
-        if data.get('gauge_address') in (ADDRESS_ZERO, None):
-            data['gauge_address'] = None
+        if data.get("gauge_address") in (ADDRESS_ZERO, None):
+            data["gauge_address"] = None
         else:
-            data['gauge_address'] = data['gauge_address'].lower()
+            data["gauge_address"] = data["gauge_address"].lower()
 
-        data['tvl'] = cls._tvl(data, token0, token1)
+        data["tvl"] = cls._tvl(data, token0, token1)
 
         # TODO: Remove once no longer needed...
-        data['isStable'] = data['stable']
-        data['totalSupply'] = data['total_supply']
+        data["isStable"] = data["stable"]
+        data["totalSupply"] = data["total_supply"]
 
         # Cleanup old data...
         cls.query_delete(cls.address == address.lower())
 
         pair = cls.create(**data)
-        LOGGER.debug('Fetched %s:%s.', cls.__name__, pair.address)
+        LOGGER.debug("Fetched %s:%s.", cls.__name__, pair.address)
 
         pair.syncup_gauge()
 
@@ -210,10 +249,10 @@ class Pair(Model):
         tvl = 0
 
         if token0.price and token0.price != 0:
-            tvl += pool_data['reserve0'] * token0.price
+            tvl += pool_data["reserve0"] * token0.price
 
         if token1.price and token1.price != 0:
-            tvl += pool_data['reserve1'] * token1.price
+            tvl += pool_data["reserve1"] * token1.price
 
         if tvl != 0 and (token0.price == 0 or token1.price == 0):
             tvl = tvl * 2
