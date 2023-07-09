@@ -5,7 +5,7 @@ import math
 from multicall import Call
 from app.fantom_multicall import FantomMulticall as Multicall
 from app.token_prices_set import TokenPrices
-from walrus import Model, TextField, IntegerField, BooleanField, FloatField
+from walrus import Model, TextField, IntegerField, BooleanField, FloatField, ListField
 from web3.constants import ADDRESS_ZERO
 
 from app.assets import Token
@@ -18,6 +18,8 @@ from app.settings import (
     DEFAULT_TOKEN_ADDRESS,
     OPTION_TOKEN_ADDRESS,
 )
+
+from .aprs import Apr
 
 
 class Pair(Model):
@@ -36,8 +38,9 @@ class Pair(Model):
     token1_address = TextField(index=True)
     gauge_address = TextField(index=True)
     tvl = FloatField(default=0)
-    apr = FloatField(default=0)
-    oblotr_apr = FloatField(default=0)
+    aprs = ListField()
+    # apr = FloatField(default=0)
+    # oblotr_apr = FloatField(default=0)
 
     # TODO: Backwards compat. Remove once no longer needed...
     isStable = BooleanField()
@@ -69,34 +72,41 @@ class Pair(Model):
 
         return gauge
 
+    # def _update_apr(self, gauge):
+    #     """Calculates the pool TVL"""
+    #     if self.tvl == 0:
+    #         return
+
+    #     token = Token.find(DEFAULT_TOKEN_ADDRESS)
+    #     if not TokenPrices.is_in_token_prices_set(token.address):
+    #         token._update_price()
+    #         TokenPrices.update_token_prices_set(token.address)
+
+    #     oblotr_token = Token.find(OPTION_TOKEN_ADDRESS)
+    #     if not TokenPrices.is_in_token_prices_set(oblotr_token.address):
+    #         oblotr_token._update_price()
+    #         TokenPrices.update_token_prices_set(oblotr_token.address)
+
+    #     is_option_emission = self._is_option_emission(gauge.address)
+
+    #     if is_option_emission:
+    #         daily_apr = (
+    #             (gauge.reward * (token.price - oblotr_token.price)) / self.tvl * 100
+    #         )
+    #     else:
+    #         daily_apr = (gauge.reward * token.price) / self.tvl * 100
+
+    #     oblotr_daily_apr = (gauge.oblotr_reward * oblotr_token.price) / self.tvl * 100
+
+    #     self.apr = daily_apr * 365
+    #     self.oblotr_apr = oblotr_daily_apr * 365
+    #     self.save()
     def _update_apr(self, gauge):
         """Calculates the pool TVL"""
         if self.tvl == 0:
             return
 
-        token = Token.find(DEFAULT_TOKEN_ADDRESS)
-        if not TokenPrices.is_in_token_prices_set(token.address):
-            token._update_price()
-            TokenPrices.update_token_prices_set(token.address)
-
-        oblotr_token = Token.find(OPTION_TOKEN_ADDRESS)
-        if not TokenPrices.is_in_token_prices_set(oblotr_token.address):
-            oblotr_token._update_price()
-            TokenPrices.update_token_prices_set(oblotr_token.address)
-
-        is_option_emission = self._is_option_emission(gauge.address)
-
-        if is_option_emission:
-            daily_apr = (
-                (gauge.reward * (token.price - oblotr_token.price)) / self.tvl * 100
-            )
-        else:
-            daily_apr = (gauge.reward * token.price) / self.tvl * 100
-
-        oblotr_daily_apr = (gauge.oblotr_reward * oblotr_token.price) / self.tvl * 100
-
-        self.apr = daily_apr * 365
-        self.oblotr_apr = oblotr_daily_apr * 365
+        self.aprs = Apr.calculateAprs(self.address, gauge.address)
         self.save()
 
     def _is_option_emission(self, gauge_address):
