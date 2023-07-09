@@ -7,16 +7,22 @@ import requests.exceptions
 from walrus import Model, TextField, IntegerField, FloatField
 from web3.auto import w3
 from web3.exceptions import ContractLogicError
+from web3.constants import ADDRESS_ZERO
 from app.token_prices_set import TokenPrices
 
 from app.settings import (
-    LOGGER, CACHE, TOKENLISTS, ROUTER_ADDRESS, STABLE_TOKEN_ADDRESS,
-    IGNORED_TOKEN_ADDRESSES, OPTION_TOKEN_ADDRESS, DEFAULT_TOKEN_ADDRESS
+    LOGGER,
+    CACHE,
+    TOKENLISTS,
+    ROUTER_ADDRESS,
+    STABLE_TOKEN_ADDRESS,
+    IGNORED_TOKEN_ADDRESSES,
 )
 
 
 class Token(Model):
     """ERC20 token model."""
+
     __database__ = CACHE
 
     address = TextField(primary_key=True)
@@ -25,31 +31,32 @@ class Token(Model):
     decimals = IntegerField()
     logoURI = TextField()
     price = FloatField(default=0)
-    nativeChainAddress = TextField(default='')
+    nativeChainAddress = TextField(default="")
     nativeChainId = IntegerField(default=0)
 
     # See: https://docs.1inch.io/docs/aggregation-protocol/api/swagger
-    AGGREGATOR_ENDPOINT = 'https://api.1inch.io/v4.0/10/quote'
+    AGGREGATOR_ENDPOINT = "https://api.1inch.io/v4.0/10/quote"
     # See: https://docs.dexscreener.com/#tokens
-    DEXSCREENER_ENDPOINT = 'https://api.dexscreener.com/latest/dex/tokens/'
+    DEXSCREENER_ENDPOINT = "https://api.dexscreener.com/latest/dex/tokens/"
     # See: https://defillama.com/docs/api#operations-tag-coins
-    DEFILLAMA_ENDPOINT = 'https://coins.llama.fi/prices/current/'
+    DEFILLAMA_ENDPOINT = "https://coins.llama.fi/prices/current/"
     # See: https://api.dev.dex.guru/docs#tag/Token-Finance
-    DEXGURU_ENDPOINT = 'https://api.dev.dex.guru/v1/chain/10/tokens/%/market'
+    DEXGURU_ENDPOINT = "https://api.dev.dex.guru/v1/chain/10/tokens/%/market"
     # See: https://docs.open.debank.com/en/reference/api-pro-reference/token
-    DEBANK_ENDPOINT = 'https://api.debank.com/history/token_price?chain=op&'
+    DEBANK_ENDPOINT = "https://api.debank.com/history/token_price?chain=op&"
 
-    CHAIN_NAMES = {'1': 'ethereum',
-                        '56': 'bsc',
-                        '43114': 'avax',
-                        '42161': 'arbitrum',
-                        '250': 'fantom',
-                        '10': 'optimism',
-                        '137': 'polygon',
-                        '42220': 'celo',
-                        '7700': 'canto',
-                        '369': 'pulse'
-                   }
+    CHAIN_NAMES = {
+        "1": "ethereum",
+        "56": "bsc",
+        "43114": "avax",
+        "42161": "arbitrum",
+        "250": "fantom",
+        "10": "optimism",
+        "137": "polygon",
+        "42220": "celo",
+        "7700": "canto",
+        "369": "pulse",
+    }
 
     def debank_price_in_stables(self):
         """Returns the price quoted from DeBank"""
@@ -57,12 +64,12 @@ class Token(Model):
         if self.address == STABLE_TOKEN_ADDRESS:
             return 1.0
 
-        req = self.DEBANK_ENDPOINT + 'token_id=' + self.address.lower()
+        req = self.DEBANK_ENDPOINT + "token_id=" + self.address.lower()
 
         res = requests.get(req).json()
-        token_data = res.get('data') or {}
+        token_data = res.get("data") or {}
 
-        return token_data.get('price') or 0
+        return token_data.get("price") or 0
 
     def dexguru_price_in_stables(self):
         """Returns the price quoted from DexGuru"""
@@ -72,7 +79,7 @@ class Token(Model):
 
         res = requests.get(self.DEXGURU_ENDPOINT % self.address.lower()).json()
 
-        return res.get('price_usd', 0)
+        return res.get("price_usd", 0)
 
     def defillama_price_in_stables(self):
         """Returns the price quoted from our llama defis."""
@@ -81,21 +88,21 @@ class Token(Model):
             return 1.0
 
         if (
-            self.nativeChainAddress != '' and
-            self.nativeChainId != 0 and
-            self.nativeChainAddress is not None and
-            self.nativeChainId is not None
+            self.nativeChainAddress != ""
+            and self.nativeChainId != 0
+            and self.nativeChainAddress is not None
+            and self.nativeChainId is not None
         ):
             chain_name = self.CHAIN_NAMES[str(self.nativeChainId)]
-            chain_token = chain_name + ':' + self.nativeChainAddress.lower()
+            chain_token = chain_name + ":" + self.nativeChainAddress.lower()
         else:
-            chain_token = 'fantom:' + self.address.lower()
+            chain_token = "fantom:" + self.address.lower()
 
         res = requests.get(self.DEFILLAMA_ENDPOINT + chain_token).json()
-        coins = res.get('coins', {})
+        coins = res.get("coins", {})
 
-        for (_, coin) in coins.items():
-            return coin.get('price', 0)
+        for _, coin in coins.items():
+            return coin.get("price", 0)
 
         return 0
 
@@ -112,11 +119,11 @@ class Token(Model):
             params=dict(
                 fromTokenAddress=self.address,
                 toTokenAddress=stablecoin.address,
-                amount=(1 * 10**self.decimals)
-            )
+                amount=(1 * 10**self.decimals),
+            ),
         ).json()
 
-        amount = res.get('toTokenAmount', 0)
+        amount = res.get("toTokenAmount", 0)
 
         return int(amount) / 10**stablecoin.decimals
 
@@ -126,33 +133,33 @@ class Token(Model):
         if self.address == STABLE_TOKEN_ADDRESS:
             return 1.0
 
-        if (
-            self.nativeChainAddress != '' and
-            self.nativeChainAddress is not None
-        ):
+        if self.nativeChainAddress != "" and self.nativeChainAddress is not None:
             token_address = self.nativeChainAddress.lower()
         else:
             token_address = self.address.lower()
 
         res = requests.get(self.DEXSCREENER_ENDPOINT + token_address).json()
-        pairs = res.get('pairs') or []
+        pairs = res.get("pairs") or []
 
         if len(pairs) == 0:
             return 0
 
         sorted_pairs = sorted(
             pairs,
-            key=lambda i: i['txns']['h24']['buys'] + i['txns']['h24']['sells'],
-            reverse=True
+            key=lambda i: i["txns"]["h24"]["buys"] + i["txns"]["h24"]["sells"],
+            reverse=True,
         )
 
         price = 0
 
         for prices in sorted_pairs:
-            if prices['baseToken']['address'].lower() == self.address.lower() and prices['baseToken']['symbol'] == self.symbol:
+            if (
+                prices["baseToken"]["address"].lower() == self.address.lower()
+                and prices["baseToken"]["symbol"] == self.symbol
+            ):
                 # To avoid this kek...
                 #   ValueError: could not convert string to float: '1,272.43'
-                price = str(prices.get('priceUsd') or 0).replace(',', '')
+                price = str(prices.get("priceUsd") or 0).replace(",", "")
                 break
 
         return float(price)
@@ -165,10 +172,7 @@ class Token(Model):
 
         try:
             return self.dexscreener_price_in_stables()
-        except (
-            requests.exceptions.HTTPError,
-            requests.exceptions.JSONDecodeError
-        ):
+        except (requests.exceptions.HTTPError, requests.exceptions.JSONDecodeError):
             return price
 
     def chain_price_in_stables(self):
@@ -182,11 +186,11 @@ class Token(Model):
             amount, is_stable = Call(
                 ROUTER_ADDRESS,
                 [
-                    'getAmountOut(uint256,address,address)(uint256,bool)',
+                    "getAmountOut(uint256,address,address)(uint256,bool)",
                     1 * 10**self.decimals,
                     self.address,
-                    stablecoin.address
-                ]
+                    stablecoin.address,
+                ],
             )()
         except ContractLogicError:
             return 0
@@ -206,13 +210,15 @@ class Token(Model):
 
     def _update_price(self):
         """Updates the token price in USD from different sources."""
-        if self.address == OPTION_TOKEN_ADDRESS:
-            blotr_token = Token.find(DEFAULT_TOKEN_ADDRESS)
-            if not TokenPrices.is_in_token_prices_set(blotr_token.address):
-                blotr_token._update_price()
-                TokenPrices.update_token_prices_set(blotr_token.address)
-            discount = self.check_option_discount(OPTION_TOKEN_ADDRESS)
-            self.price = blotr_token.price * discount / 100
+        underlying_token = self.check_if_token_is_option(self.address)
+        if underlying_token:
+            token = Token.find(underlying_token)
+            if not TokenPrices.is_in_token_prices_set(token.address):
+                token._update_price()
+                TokenPrices.update_token_prices_set(token.address)
+
+            discount = self.check_option_discount(self.address)
+            self.price = token.price * discount / 100
             self.save()
             return
 
@@ -229,14 +235,29 @@ class Token(Model):
     def check_option_discount(cls, address):
         """Checks discount on Option Token."""
         address = address.lower()
-
-        discount = Call(
-            address,
-            [
-                'discount()(uint256)'
-            ]
-        )()
+        discount = Call(address, ["discount()(uint256)"])()
         return discount
+
+    @classmethod
+    def check_option_ve_discount(cls, address):
+        """Checks discount on Option Token."""
+        address = address.lower()
+        ve_discount = Call(address, ["veDiscount()(uint256)"])()
+        return ve_discount
+
+    @classmethod
+    def check_if_token_is_option(cls, address):
+        """Checks if the token to update price is an option token."""
+        address = address.lower()
+        try:
+            underlying_token = Call(
+                address,
+                ["underlyingToken()(address)"],
+            )()
+            if underlying_token != ADDRESS_ZERO:
+                return underlying_token
+        except AttributeError:
+            return False
 
     @classmethod
     def from_chain(cls, address, logoURI=None):
@@ -247,11 +268,13 @@ class Token(Model):
         # a=    Call(address, ['name()(string)'], [['name', None]])()
         # b=    Call(address, ['symbol()(string)'], [['symbol', None]])()
         # c=    Call(address, ['decimals()(uint8)'], [['decimals', None]])()
-        token_multi = Multicall([
-            Call(address, ['name()(string)'], [['name', None]]),
-            Call(address, ['symbol()(string)'], [['symbol', None]]),
-            Call(address, ['decimals()(uint8)'], [['decimals', None]])
-        ])
+        token_multi = Multicall(
+            [
+                Call(address, ["name()(string)"], [["name", None]]),
+                Call(address, ["symbol()(string)"], [["symbol", None]]),
+                Call(address, ["decimals()(uint8)"], [["decimals", None]]),
+            ]
+        )
 
         data = token_multi()
 
@@ -259,7 +282,7 @@ class Token(Model):
         token = cls.create(address=address, **data)
         token._update_price()
 
-        LOGGER.debug('Fetched %s:%s.', cls.__name__, address)
+        LOGGER.debug("Fetched %s:%s.", cls.__name__, address)
 
         return token
 
@@ -273,25 +296,23 @@ class Token(Model):
                 res = requests.get(tlist).json()
                 for token_data in res:
                     # Skip tokens from other chains...
-                    if token_data.get('chainId', None) != our_chain_id:
+                    if token_data.get("chainId", None) != our_chain_id:
                         continue
 
-                    token_data['address'] = token_data['address'].lower()
+                    token_data["address"] = token_data["address"].lower()
 
-                    if token_data['address'] in IGNORED_TOKEN_ADDRESSES:
+                    if token_data["address"] in IGNORED_TOKEN_ADDRESSES:
                         continue
 
-                    if 'nativeChainAddress' in token_data:
-                        if token_data['nativeChainAddress'] is not None:
-                            addr = token_data['nativeChainAddress'].lower()
-                            token_data['nativeChainAddress'] = addr
+                    if "nativeChainAddress" in token_data:
+                        if token_data["nativeChainAddress"] is not None:
+                            addr = token_data["nativeChainAddress"].lower()
+                            token_data["nativeChainAddress"] = addr
 
                     token = cls.create(**token_data)
                     token._update_price()
 
-                    LOGGER.debug(
-                        'Loaded %s:%s.', cls.__name__, token_data['address']
-                    )
+                    LOGGER.debug("Loaded %s:%s.", cls.__name__, token_data["address"])
             except Exception as error:
                 LOGGER.error(error)
                 continue
