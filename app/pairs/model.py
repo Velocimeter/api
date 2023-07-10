@@ -46,7 +46,7 @@ class Pair(Model):
     token1_address = TextField(index=True)
     gauge_address = TextField(index=True)
     tvl = FloatField(default=0)
-    aprs = ListField()
+    aprs = []
     # apr = FloatField(default=0)
     # oblotr_apr = FloatField(default=0)
 
@@ -174,8 +174,7 @@ class Pair(Model):
                     }
                 )
 
-        for aprDict in aprs:
-            self.aprs.append(json.dumps(aprDict))
+        self.aprs = aprs
         print(self.aprs)
         self.save()
 
