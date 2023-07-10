@@ -1,11 +1,19 @@
 # -*- coding: utf-8 -*-
 
 import math
+import json
 
 from multicall import Call
 from app.fantom_multicall import FantomMulticall as Multicall
 from app.token_prices_set import TokenPrices
-from walrus import Model, TextField, IntegerField, BooleanField, FloatField, ListField
+from walrus import (
+    Model,
+    TextField,
+    IntegerField,
+    BooleanField,
+    FloatField,
+    ListField,
+)
 from web3.constants import ADDRESS_ZERO
 
 from app.assets import Token
@@ -106,7 +114,9 @@ class Pair(Model):
         if self.tvl == 0:
             return
 
-        self.aprs = Apr.calculateAprs(self.address, gauge.address)
+        aprs = Apr.calculateAprs(self.address, gauge.address)
+        for aprDict in aprs:
+            self.aprs.append(json.dumps(aprDict))
         self.save()
 
     def _is_option_emission(self, gauge_address):

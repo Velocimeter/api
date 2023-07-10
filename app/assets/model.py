@@ -256,6 +256,8 @@ class Token(Model):
             )()
             if underlying_token != ADDRESS_ZERO:
                 return underlying_token
+        except ContractLogicError:
+            return False
         except AttributeError:
             return False
 

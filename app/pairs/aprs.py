@@ -11,6 +11,8 @@ from app.assets import Token
 class Apr:
     """Apr model."""
 
+    DAY_IN_SECONDS = 24 * 60 * 60
+
     @classmethod
     def calculateAprs(self, pair_address, gauge_address):
         """Loads a gauge from cache, of from chain if not found."""
@@ -24,20 +26,21 @@ class Apr:
         """Fetches pair/pool gauge data from chain."""
         gauge_address = gauge_address.lower()
 
-        rewards_list_lenght = Call(
+        rewards_list_lenght_data = Call(
             gauge_address,
-            "rewardsListLength()(uint256)",
-            [["rewards_list_lenght"], None],
+            ["rewardsListLength()(uint256)"],
+            [["rewards_list_lenght", None]],
         )()
 
         rewards_data = []
 
-        for idx in range(0, rewards_list_lenght):
-            reward_token_addy = Call(
+        for idx in range(0, rewards_list_lenght_data["rewards_list_lenght"]):
+            reward_token_addy_call = Call(
                 gauge_address,
                 ["rewards(uint256)(address)", idx],
-                [["reward_token_addy"], None],
+                [["reward_token_addy", None]],
             )()
+            reward_token_addy = reward_token_addy_call["reward_token_addy"]
             reward_token = Token.find(reward_token_addy)
             if not TokenPrices.is_in_token_prices_set(reward_token_addy):
                 reward_token._update_price()
@@ -92,11 +95,12 @@ class Apr:
                 token._update_price()
                 TokenPrices.update_token_prices_set(token.address)
 
-            underlying_token_address = token.check_if_token_is_option()
+            underlying_token_address = token.check_if_token_is_option(token.address)
             if underlying_token_address and underlying_token_address != ADDRESS_ZERO:
-                discount = token.check_option_discount()
-                ve_discount = token.check_option_ve_discount()
-                ratio = ve_discount / discount
+                discount = token.check_option_discount(token.address)
+                ve_discount = token.check_option_ve_discount(token.address)
+                # devide 1 / (ve_discount / discount) to get the ratio bc discounts are asian discounts
+                ratio = discount / ve_discount
                 max_token_price = token.price * ratio
 
                 min_apr = reward["reward"] * (token.price) / pair.tvl * 100 * 365
