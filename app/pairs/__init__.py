@@ -31,7 +31,7 @@ class Pairs(object):
                 gauge = Gauge.find(pair.gauge_address)
                 data['gauge'] = gauge._data
                 data['gauge']['bribes'] = []
-                data['aprs'] = pair.aprs
+                data['aprs'] = json.dumps(pair.aprs)
                 for (token_addr, reward_ammount) in gauge.rewards:
                     data['gauge']['bribes'].append(
                         dict(
