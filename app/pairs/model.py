@@ -174,8 +174,7 @@ class Pair(Model):
                     }
                 )
 
-        self.aprs = aprs
-        print(self.aprs)
+        self.aprs.extend(aprs)
         self.save()
 
     def _is_option_emission(self, gauge_address):
