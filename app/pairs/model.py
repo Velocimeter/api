@@ -152,11 +152,13 @@ class Pair(Model):
 
             underlying_token_address = token.check_if_token_is_option(token.address)
             if underlying_token_address and underlying_token_address != ADDRESS_ZERO:
-                discount = token.check_option_discount(token.address)
+                underlying_token = Token.find(underlying_token_address)
+                if not TokenPrices.is_in_token_prices_set(underlying_token.address):
+                    underlying_token._update_price()
+                    TokenPrices.update_token_prices_set(underlying_token.address)
+
                 ve_discount = token.check_option_ve_discount(token.address)
-                # devide 1 / (ve_discount / discount) to get the ratio bc discounts are asian discounts
-                ratio = discount / ve_discount
-                max_token_price = token.price * ratio
+                max_token_price = underlying_token.price * (100 - ve_discount) / 100
 
                 min_apr = reward["reward"] * (token.price) / self.tvl * 100 * 365
                 max_apr = reward["reward"] * (max_token_price) / self.tvl * 100 * 365

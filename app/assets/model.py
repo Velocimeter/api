@@ -218,7 +218,7 @@ class Token(Model):
                 TokenPrices.update_token_prices_set(token.address)
 
             discount = self.check_option_discount(self.address)
-            self.price = token.price * discount / 100
+            self.price = token.price * (100 - discount) / 100
             self.save()
             return
 
