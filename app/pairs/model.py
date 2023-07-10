@@ -120,10 +120,15 @@ class Pair(Model):
                         ["left(address)(uint256)", reward_token_addy],
                         [["left", None]],
                     ),
+                    Call(
+                        VOTER_ADDRESS,
+                        ["isAlive(address)(bool)", gauge_address],
+                        [["is_alive", None]],
+                    ),
                 ]
             )()
 
-            if reward_token_data["left"] == 0:
+            if reward_token_data["left"] == 0 or reward_token_data["is_alive"] == False:
                 reward_token_data["reward"] = 0
             else:
                 reward_token_data["reward"] = (
