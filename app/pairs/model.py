@@ -161,14 +161,23 @@ class Pair(Model):
                 min_apr = reward["reward"] * (token.price) / self.tvl * 100 * 365
                 max_apr = reward["reward"] * (max_token_price) / self.tvl * 100 * 365
 
-                aprs.append(
-                    {
-                        "symbol": token.symbol,
-                        "logo": token.logoURI,
-                        "min_apr": min_apr,
-                        "max_apr": max_apr,
-                    }
-                )
+                if min_apr == 0:
+                    aprs.append(
+                        {
+                            "symbol": token.symbol,
+                            "logo": token.logoURI,
+                            "apr": 0,
+                        }
+                    )
+                else:
+                    aprs.append(
+                        {
+                            "symbol": token.symbol,
+                            "logo": token.logoURI,
+                            "min_apr": min_apr,
+                            "max_apr": max_apr,
+                        }
+                    )
             else:
                 apr = reward["reward"] * (token.price) / self.tvl * 100 * 365
                 aprs.append(
