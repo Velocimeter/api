@@ -32,7 +32,10 @@ class Pairs(object):
                 gauge = Gauge.find(pair.gauge_address)
                 data["gauge"] = gauge._data
                 data["gauge"]["bribes"] = []
-                data["aprs"] = pair.aprs
+                try:
+                    data["aprs"] = pair.aprs.as_list()
+                except Exception:
+                    data["aprs"] = []
                 for token_addr, reward_ammount in gauge.rewards:
                     data["gauge"]["bribes"].append(
                         dict(

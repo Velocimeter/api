@@ -46,7 +46,7 @@ class Pair(Model):
     token1_address = TextField(index=True)
     gauge_address = TextField(index=True)
     tvl = FloatField(default=0)
-    aprs = []
+    aprs = ListField()
     # apr = FloatField(default=0)
     # oblotr_apr = FloatField(default=0)
 
@@ -174,7 +174,9 @@ class Pair(Model):
                     }
                 )
 
-        self.aprs.extend(aprs)
+        for aprDict in aprs:
+            self.aprs.append(json.dumps(aprDict))
+
         self.save()
 
     def _is_option_emission(self, gauge_address):
