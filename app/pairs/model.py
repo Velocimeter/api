@@ -47,8 +47,10 @@ class Pair(Model):
     gauge_address = TextField(index=True)
     tvl = FloatField(default=0)
     aprs = TextField()
-    # apr = FloatField(default=0)
-    # oblotr_apr = FloatField(default=0)
+
+    # TODO: Migration compatibility. Remove once no longer needed...
+    apr = FloatField(default=0)
+    oblotr_apr = FloatField(default=0)
 
     # TODO: Backwards compat. Remove once no longer needed...
     isStable = BooleanField()
