@@ -1,11 +1,19 @@
 # -*- coding: utf-8 -*-
 
 import math
+import json
 
 from multicall import Call
 from app.fantom_multicall import FantomMulticall as Multicall
 from app.token_prices_set import TokenPrices
-from walrus import Model, TextField, IntegerField, BooleanField, FloatField
+from walrus import (
+    Model,
+    TextField,
+    IntegerField,
+    BooleanField,
+    FloatField,
+    ListField,
+)
 from web3.constants import ADDRESS_ZERO
 
 from app.assets import Token
@@ -25,6 +33,8 @@ class Pair(Model):
 
     __database__ = CACHE
 
+    DAY_IN_SECONDS = 24 * 60 * 60
+
     address = TextField(primary_key=True)
     symbol = TextField()
     decimals = IntegerField()
@@ -36,6 +46,9 @@ class Pair(Model):
     token1_address = TextField(index=True)
     gauge_address = TextField(index=True)
     tvl = FloatField(default=0)
+    aprs = TextField()
+
+    # TODO: Migration compatibility. Remove once no longer needed...
     apr = FloatField(default=0)
     oblotr_apr = FloatField(default=0)
 
@@ -65,38 +78,123 @@ class Pair(Model):
             return
 
         gauge = Gauge.from_chain(self.gauge_address)
-        self._update_apr(gauge)
+        self._update_apr(self.gauge_address)
 
         return gauge
 
-    def _update_apr(self, gauge):
-        """Calculates the pool TVL"""
-        if self.tvl == 0:
-            return
+    def _update_apr(self, gauge_address):
+        """Updates the aprs for the pair."""
 
-        token = Token.find(DEFAULT_TOKEN_ADDRESS)
-        if not TokenPrices.is_in_token_prices_set(token.address):
-            token._update_price()
-            TokenPrices.update_token_prices_set(token.address)
+        rewards_list_lenght_data = Call(
+            gauge_address,
+            ["rewardsListLength()(uint256)"],
+            [["rewards_list_lenght", None]],
+        )()
 
-        oblotr_token = Token.find(OPTION_TOKEN_ADDRESS)
-        if not TokenPrices.is_in_token_prices_set(oblotr_token.address):
-            oblotr_token._update_price()
-            TokenPrices.update_token_prices_set(oblotr_token.address)
+        rewards_data = []
 
-        is_option_emission = self._is_option_emission(gauge.address)
+        is_option_emissions = self._is_option_emission(gauge_address)
 
-        if is_option_emission:
-            daily_apr = (
-                (gauge.reward * (token.price - oblotr_token.price)) / self.tvl * 100
-            )
-        else:
-            daily_apr = (gauge.reward * token.price) / self.tvl * 100
+        for idx in range(0, rewards_list_lenght_data["rewards_list_lenght"]):
+            reward_token_addy_call = Call(
+                gauge_address,
+                ["rewards(uint256)(address)", idx],
+                [["reward_token_addy", None]],
+            )()
+            reward_token_addy = reward_token_addy_call["reward_token_addy"]
+            if is_option_emissions and reward_token_addy == DEFAULT_TOKEN_ADDRESS:
+                reward_token = Token.find(OPTION_TOKEN_ADDRESS)
+            else:
+                reward_token = Token.find(reward_token_addy)
+            if not TokenPrices.is_in_token_prices_set(reward_token_addy):
+                reward_token._update_price()
+                TokenPrices.update_token_prices_set(reward_token_addy)
 
-        oblotr_daily_apr = (gauge.oblotr_reward * oblotr_token.price) / self.tvl * 100
+            reward_token_data = Multicall(
+                [
+                    Call(
+                        gauge_address,
+                        ["rewardRate(address)(uint256)", reward_token_addy],
+                        [["reward_rate", None]],
+                    ),
+                    Call(
+                        gauge_address,
+                        ["left(address)(uint256)", reward_token_addy],
+                        [["left", None]],
+                    ),
+                    Call(
+                        VOTER_ADDRESS,
+                        ["isAlive(address)(bool)", gauge_address],
+                        [["is_alive", None]],
+                    ),
+                ]
+            )()
 
-        self.apr = daily_apr * 365
-        self.oblotr_apr = oblotr_daily_apr * 365
+            if reward_token_data["left"] == 0 or reward_token_data["is_alive"] == False:
+                reward_token_data["reward"] = 0
+            else:
+                reward_token_data["reward"] = (
+                    reward_token_data["reward_rate"]
+                    / 10**reward_token.decimals
+                    * self.DAY_IN_SECONDS
+                )
+
+            data = {**reward_token_data, **reward_token._data}
+
+            rewards_data.append(data)
+
+        aprs = []
+
+        for reward in rewards_data:
+            token = Token.find(reward["address"])
+
+            if not TokenPrices.is_in_token_prices_set(token.address):
+                token._update_price()
+                TokenPrices.update_token_prices_set(token.address)
+
+            underlying_token_address = token.check_if_token_is_option(token.address)
+            if underlying_token_address and underlying_token_address != ADDRESS_ZERO:
+                underlying_token = Token.find(underlying_token_address)
+                if not TokenPrices.is_in_token_prices_set(underlying_token.address):
+                    underlying_token._update_price()
+                    TokenPrices.update_token_prices_set(underlying_token.address)
+
+                ve_discount = token.check_option_ve_discount(token.address)
+                max_token_price = underlying_token.price * (100 - ve_discount) / 100
+
+                min_apr = reward["reward"] * (token.price) / self.tvl * 100 * 365
+                max_apr = reward["reward"] * (max_token_price) / self.tvl * 100 * 365
+
+                if min_apr == 0:
+                    aprs.append(
+                        {
+                            "symbol": token.symbol,
+                            "logo": token.logoURI,
+                            "apr": 0,
+                        }
+                    )
+                else:
+                    aprs.append(
+                        {
+                            "symbol": token.symbol,
+                            "logo": token.logoURI,
+                            "min_apr": min_apr,
+                            "max_apr": max_apr,
+                        }
+                    )
+            else:
+                apr = reward["reward"] * (token.price) / self.tvl * 100 * 365
+                aprs.append(
+                    {
+                        "symbol": token.symbol,
+                        "logo": token.logoURI,
+                        "apr": apr,
+                    }
+                )
+
+        aprs_str = json.dumps(aprs)
+
+        self.aprs = aprs_str
         self.save()
 
     def _is_option_emission(self, gauge_address):
@@ -161,24 +259,6 @@ class Pair(Model):
     def from_chain(cls, address):
         """Fetches pair/pool data from chain."""
         address = address.lower()
-
-        # a = Call(address,
-        #         'getReserves()(uint256,uint256)', [['reserve0', None], ['reserve1', None]])()
-        # b = Call(address, 'token0()(address)', [['token0_address', None]])()
-        # c = Call(address, 'token1()(address)', [['token1_address', None]])()
-        # k = Call(
-        #         address,
-        #         'totalSupply()(uint256)',
-        #         [['total_supply', None]]
-        #     )()
-        # d = Call(address, 'symbol()(string)', [['symbol', None]])()
-        # e = Call(address, 'decimals()(uint8)', [['decimals', None]])()
-        # f = Call(address, 'stable()(bool)', [['stable', None]])()
-        # g = Call(
-        #         VOTER_ADDRESS,
-        #         ['gauges(address)(address)', address],
-        #         [['gauge_address', None]]
-        #     )()
 
         pair_multi = Multicall(
             [

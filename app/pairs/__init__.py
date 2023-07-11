@@ -14,9 +14,10 @@ from app.settings import CACHE, LOGGER
 
 class Pairs(object):
     """Handles our liquidity pools/pairs"""
+
     # Seconds to expire the cache, a bit longer than the syncer schedule...
 
-    CACHE_KEY = 'pairs:json'
+    CACHE_KEY = "pairs:json"
 
     @classmethod
     def serialize(cls):
@@ -24,21 +25,20 @@ class Pairs(object):
 
         for pair in Pair.all():
             data = pair._data
-            data['token0'] = Token.find(pair.token0_address)._data
-            data['token1'] = Token.find(pair.token1_address)._data
+            data["token0"] = Token.find(pair.token0_address)._data
+            data["token1"] = Token.find(pair.token1_address)._data
 
             if pair.gauge_address:
                 gauge = Gauge.find(pair.gauge_address)
-                data['gauge'] = gauge._data
-                data['gauge']['bribes'] = []
-
-                for (token_addr, reward_ammount) in gauge.rewards:
-                    data['gauge']['bribes'].append(
+                data["gauge"] = gauge._data
+                data["gauge"]["bribes"] = []
+                for token_addr, reward_ammount in gauge.rewards:
+                    data["gauge"]["bribes"].append(
                         dict(
                             token=Token.find(token_addr)._data,
                             reward_ammount=float(reward_ammount),
                             # TODO: Backwards compat...
-                            rewardAmmount=float(reward_ammount)
+                            rewardAmmount=float(reward_ammount),
                         )
                     )
 
@@ -51,16 +51,14 @@ class Pairs(object):
         pairs = json.dumps(dict(data=cls.serialize()), cls=JSONEncoder)
 
         CACHE.set(cls.CACHE_KEY, pairs)
-        LOGGER.debug('Cache updated for %s.', cls.CACHE_KEY)
+        LOGGER.debug("Cache updated for %s.", cls.CACHE_KEY)
 
         return pairs
 
     def resync(self, pair_address, gauge_address):
         """Resyncs a pair based on it's address or gauge address."""
         if Web3.isAddress(gauge_address):
-            old_pair = Pair.get(
-                Pair.gauge_address == str(gauge_address).lower()
-            )
+            old_pair = Pair.get(Pair.gauge_address == str(gauge_address).lower())
             Pair.from_chain(old_pair.address)
         elif Web3.isAddress(pair_address):
             Pair.from_chain(pair_address)
@@ -71,10 +69,7 @@ class Pairs(object):
 
     def on_get(self, req, resp):
         """Returns cached liquidity pools/pairs"""
-        self.resync(
-            req.get_param('pair_address'),
-            req.get_param('gauge_address')
-        )
+        self.resync(req.get_param("pair_address"), req.get_param("gauge_address"))
 
         pairs = CACHE.get(self.CACHE_KEY) or Pairs.recache()
 
