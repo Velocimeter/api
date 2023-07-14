@@ -80,7 +80,7 @@ class Pair(Model):
     def syncup_killed_gauges(self):
         """Fetches dead gauges data from chain."""
 
-        killed_gauges = KilledGaugesStore.killed_gauges(self.address)
+        killed_gauges = KilledGaugesStore.get_killed_gauges(self.address)
         if len(killed_gauges) == 0:
             return
 
@@ -340,6 +340,7 @@ class Pair(Model):
         LOGGER.debug("Fetched %s:%s.", cls.__name__, pair.address)
 
         pair.syncup_gauge()
+        pair.syncup_killed_gauges()
 
         return pair
 

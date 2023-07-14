@@ -11,17 +11,15 @@ from app.settings import (
 class KilledGaugesStore:
     """Saves killed gauges addresses"""
 
-    killedGauges = []
+    killed_gauges = []
 
     @classmethod
-    def killed_gauges(cls, pair_address):
+    def get_killed_gauges(cls, pair_address):
         """Returns list of killed gauges for pair if any"""
         result = []
-        for killed_gauge in cls.killedGauges:
+        for killed_gauge in cls.killed_gauges:
             if killed_gauge["pair_address"] == pair_address:
                 result.append(killed_gauge["gauge_address"])
-        if len(result) == 0:
-            return False
         return result
 
     @classmethod
@@ -59,7 +57,7 @@ class KilledGaugesStore:
                     "pair_address": pair.lower(),
                     "gauge_address": dead_gauges_addresses[i],
                 }
-                cls.killedGauges.append(result)
+                cls.killed_gauges.append(result)
 
-        print("Killed gauges: ", cls.killedGauges)
+        print("Killed gauges: ", cls.killed_gauges)
         LOGGER.info("Got the list of killed gauges")
