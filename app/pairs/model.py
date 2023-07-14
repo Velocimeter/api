@@ -162,8 +162,16 @@ class Pair(Model):
                 ve_discount = token.check_option_ve_discount(token.address)
                 max_token_price = underlying_token.price * (100 - ve_discount) / 100
 
-                min_apr = reward["reward"] * (token.price) / self.tvl * 100 * 365
-                max_apr = reward["reward"] * (max_token_price) / self.tvl * 100 * 365
+                min_apr = 0
+                max_apr = 0
+                try:
+                    min_apr = reward["reward"] * (token.price) / self.tvl * 100 * 365
+                    max_apr = (
+                        reward["reward"] * (max_token_price) / self.tvl * 100 * 365
+                    )
+                except ZeroDivisionError:
+                    min_apr = 0
+                    max_apr = 0
 
                 if min_apr == 0:
                     aprs.append(
@@ -183,7 +191,11 @@ class Pair(Model):
                         }
                     )
             else:
-                apr = reward["reward"] * (token.price) / self.tvl * 100 * 365
+                apr = 0
+                try:
+                    apr = reward["reward"] * (token.price) / self.tvl * 100 * 365
+                except ZeroDivisionError:
+                    apr = 0
                 aprs.append(
                     {
                         "symbol": token.symbol,
