@@ -27,7 +27,7 @@ class Pairs(object):
             data = pair._data
             data["token0"] = Token.find(pair.token0_address)._data
             data["token1"] = Token.find(pair.token1_address)._data
-
+            data["killed_gauges"] = []
             if pair.gauge_address:
                 gauge = Gauge.find(pair.gauge_address)
                 data["gauge"] = gauge._data
@@ -41,6 +41,10 @@ class Pairs(object):
                             rewardAmmount=float(reward_ammount),
                         )
                     )
+            if len(pair.killed_gauges) > 0:
+                for gauge_address in pair.killed_gauges:
+                    gauge = Gauge.find(gauge_address)
+                    data["killed_gauges"].append(gauge._data)
 
             pairs.append(data)
 

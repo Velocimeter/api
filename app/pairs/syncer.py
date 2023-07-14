@@ -7,27 +7,25 @@ import time
 
 from app.pairs import Pairs, Pair
 from app.assets import Assets, Token
-from app.settings import (
-    LOGGER, SYNC_WAIT_SECONDS
-)
+from app.killed_gauges import KilledGaugesStore
+from app.settings import LOGGER, SYNC_WAIT_SECONDS
 
 
 def sync():
-    """Syncs """
-    LOGGER.info('Syncing pairs ...')
+    """Syncs"""
+    LOGGER.info("Syncing pairs ...")
     t0 = time.time()
 
     Token.from_tokenlists()
     Assets.recache()
-    LOGGER.info('Syncing tokens done in %s seconds.', time.time() - t0)
+    KilledGaugesStore.update_killed_gauges_list()
+    LOGGER.info("Syncing tokens done in %s seconds.", time.time() - t0)
 
-    with ThreadPool(int(os.getenv('SYNC_MAX_THREADS', 4))) as pool:
+    with ThreadPool(int(os.getenv("SYNC_MAX_THREADS", 4))) as pool:
         addresses = Pair.chain_addresses()
 
         LOGGER.debug(
-            'Syncing %s pairs using %s threads...',
-            len(addresses),
-            pool._processes
+            "Syncing %s pairs using %s threads...", len(addresses), pool._processes
         )
 
         pool.map(Pair.from_chain, addresses)
@@ -35,11 +33,11 @@ def sync():
         pool.join()
 
     Pairs.recache()
-    LOGGER.info('Syncing pairs done in %s seconds.', time.time() - t0)
+    LOGGER.info("Syncing pairs done in %s seconds.", time.time() - t0)
 
 
 def sync_forever():
-    LOGGER.info('Syncing every %s seconds ...', SYNC_WAIT_SECONDS)
+    LOGGER.info("Syncing every %s seconds ...", SYNC_WAIT_SECONDS)
 
     while True:
         sync_proc = Process(target=sync)
@@ -47,7 +45,7 @@ def sync_forever():
             sync_proc.start()
             sync_proc.join()
         except KeyboardInterrupt:
-            LOGGER.info('Syncing stopped!')
+            LOGGER.info("Syncing stopped!")
             break
         except Exception as error:
             LOGGER.error(error)
@@ -60,7 +58,7 @@ def sync_forever():
         time.sleep(SYNC_WAIT_SECONDS)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     if SYNC_WAIT_SECONDS < 1:
         sync()
     else:
