@@ -6,14 +6,8 @@ import json
 from multicall import Call
 from app.fantom_multicall import FantomMulticall as Multicall
 from app.token_prices_set import TokenPrices
-from walrus import (
-    Model,
-    TextField,
-    IntegerField,
-    BooleanField,
-    FloatField,
-    ListField,
-)
+from app.killed_gauges import KilledGaugesStore
+from walrus import Model, TextField, IntegerField, BooleanField, FloatField, ListField
 from web3.constants import ADDRESS_ZERO
 
 from app.assets import Token
@@ -45,6 +39,7 @@ class Pair(Model):
     token0_address = TextField(index=True)
     token1_address = TextField(index=True)
     gauge_address = TextField(index=True)
+    killed_gauges = ListField()
     tvl = FloatField(default=0)
     aprs = TextField()
 
@@ -81,6 +76,19 @@ class Pair(Model):
         self._update_apr(self.gauge_address)
 
         return gauge
+
+    def syncup_killed_gauges(self):
+        """Fetches dead gauges data from chain."""
+
+        killed_gauges = KilledGaugesStore.get_killed_gauges(self.address)
+        if len(killed_gauges) == 0:
+            return
+
+        for gauge_address in killed_gauges:
+            Gauge.from_chain(gauge_address)
+            self.killed_gauges.append(gauge_address)
+
+        self.save()
 
     def _update_apr(self, gauge_address):
         """Updates the aprs for the pair."""
@@ -173,7 +181,7 @@ class Pair(Model):
                     min_apr = 0
                     max_apr = 0
 
-                if min_apr == 0:
+                if max_apr < 0.1:
                     aprs.append(
                         {
                             "symbol": token.symbol,
@@ -332,6 +340,7 @@ class Pair(Model):
         LOGGER.debug("Fetched %s:%s.", cls.__name__, pair.address)
 
         pair.syncup_gauge()
+        pair.syncup_killed_gauges()
 
         return pair
 
