@@ -181,7 +181,7 @@ class Pair(Model):
                     min_apr = 0
                     max_apr = 0
 
-                if min_apr == 0:
+                if max_apr < 0.1:
                     aprs.append(
                         {
                             "symbol": token.symbol,
