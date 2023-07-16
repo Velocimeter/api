@@ -210,23 +210,25 @@ class Token(Model):
 
     def _update_price(self):
         """Updates the token price in USD from different sources."""
+        underlying_token = self.check_if_token_is_option(self.address)
+        if underlying_token:
+            token = Token.find(underlying_token)
+            if not TokenPrices.is_in_token_prices_set(token.address):
+                token._update_price()
+                TokenPrices.update_token_prices_set(token.address)
+
+            discount = self.check_option_discount(self.address)
+            self.price = token.price * (100 - discount) / 100
+            self.save()
+            return
 
         self.price = self.aggregated_price_in_stables()
+
         if self.price == 0:
-            underlying_token = self.check_if_token_is_option(self.address)
-            if underlying_token:
-                token = Token.find(underlying_token)
-                if not TokenPrices.is_in_token_prices_set(token.address):
-                    token._update_price()
-                    TokenPrices.update_token_prices_set(token.address)
-
-                discount = self.check_option_discount(self.address)
-                self.price = token.price * (100 - discount) / 100
-                self.save()
-                return
-
             self.price = self.chain_price_in_stables()
 
+        # if self.price == 0:
+        #     self.price = self.debank_price_in_stables()
         self.save()
 
     @classmethod
