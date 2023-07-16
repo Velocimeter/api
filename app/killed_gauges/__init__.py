@@ -40,16 +40,18 @@ class KilledGaugesStore:
 
         dead_gauges_addresses = list(dead_gauges_multi().values())
 
-        pairs_of_killed_gauges_calls = []
+        pairs_of_killed_gauges_multi = Multicall(
+            [
+                Call(
+                    dead_gauges_addresses[idx],
+                    ["stake()(address)"],
+                    [[idx, None]],
+                )
+                for idx in range(0, dead_gauges_count)
+            ]
+        )
 
-        for dead_gauge_address in dead_gauges_addresses:
-            pairs_of_killed_gauges_calls.append(
-                Call(dead_gauge_address, ["stake()(address)"], [["pair", None]])
-            )
-
-        pairs_of_killed_gauges_multi = Multicall(pairs_of_killed_gauges_calls)()
-
-        pairs_of_killed_gauges = list(pairs_of_killed_gauges_multi.values())
+        pairs_of_killed_gauges = list(pairs_of_killed_gauges_multi().values())
 
         for i, pair in enumerate(pairs_of_killed_gauges):
             if pair is not None:
