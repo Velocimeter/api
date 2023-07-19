@@ -156,6 +156,8 @@ class Token(Model):
             if (
                 prices["baseToken"]["address"].lower() == self.address.lower()
                 and prices["baseToken"]["symbol"] == self.symbol
+                and not prices["quoteToken"]["address"].lower()
+                == "0x04068DA6C83AFCFA0e13ba15A6696662335D5B75".lower()
             ):
                 # To avoid this kek...
                 #   ValueError: could not convert string to float: '1,272.43'
