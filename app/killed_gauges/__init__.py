@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from multicall import Call
-from app.fantom_multicall import FantomMulticall as Multicall
+from app.mantle_multicall import MantleMulticall as Multicall
 
 from app.settings import (
     LOGGER,

@@ -4,7 +4,7 @@ import math
 import json
 
 from multicall import Call
-from app.fantom_multicall import FantomMulticall as Multicall
+from app.mantle_multicall import MantleMulticall as Multicall
 from app.token_prices_set import TokenPrices
 from app.killed_gauges import KilledGaugesStore
 from walrus import Model, TextField, IntegerField, BooleanField, FloatField, ListField

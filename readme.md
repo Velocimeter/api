@@ -11,16 +11,16 @@ To build the image, run:
 $ docker build ./ -t velodrome/api
 ```
 
-Next, populate the `env.example.fantom` file, and update the relevant variables.
+Next, populate the `env.example.mantle` file, and update the relevant variables.
 
 Finally, to start the container, run:
 
 ```
-$ docker run --rm --env-file=env.example.fantom -v $(pwd):/app -p 3001:3001 -w /app -it velodrome/api
+$ docker run --rm --env-file=env.example.mantle -v $(pwd):/app -p 3001:3001 -w /app -it velodrome/api
 ```
 
 To run the syncer (refreshes data from chain) process, run:
 
 ```
-$ docker run --rm --env-file=env.example.fantom -v $(pwd):/app -p 3001:3001 -w /app -it velodrome/api sh -c 'python -m app.pairs.syncer'
+$ docker run --rm --env-file=env.example.mantle -v $(pwd):/app -p 3001:3001 -w /app -it velodrome/api sh -c 'python -m app.pairs.syncer'
 ```
