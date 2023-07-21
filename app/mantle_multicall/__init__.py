@@ -10,7 +10,7 @@ from multicall.utils import chain_id
 # i need to extend constants to add the multicall address for my network and override MultiCall class to use my multicall address
 
 MANTLE_MULTICALL3_ADDRESS: Dict[int, str] = {
-    5500: "0xB57dB01a3D087624b2ADfa676198a6f1631593F3",
+    5000: "0xB57dB01a3D087624b2ADfa676198a6f1631593F3",
 }
 
 UPDATED_MULTICALL3_ADDRESSES = {**MULTICALL3_ADDRESSES, **MANTLE_MULTICALL3_ADDRESS}

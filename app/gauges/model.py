@@ -122,8 +122,10 @@ class Gauge(Model):
         weekly = Call(minter_address, "weekly_emission()(uint256)")()
         supply = Call(VE_ADDRESS, "supply()(uint256)")()
         growth = Call(minter_address, ["calculate_growth(uint256)(uint256)", weekly])()
-
-        return ((growth * 52) / supply) * 100
+        try:
+            return ((growth * 52) / supply) * 100
+        except ZeroDivisionError:
+            return 0.0
 
     @classmethod
     def _update_apr(cls, gauge):
