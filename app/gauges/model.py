@@ -199,7 +199,7 @@ class Gauge(Model):
                     TokenPrices.update_token_prices_set(underlying_token.address)
 
                 ve_discount = token.check_option_ve_discount(token.address)
-                max_token_value = token.price * (100 - ve_discount) / 100
+                max_token_value = underlying_token.price * (100 - ve_discount) / 100
                 if token.price and max_token_value:
                     gauge.max_tbv += amount / 10**token.decimals * max_token_value
                     gauge.min_tbv += amount / 10**token.decimals * token.price
