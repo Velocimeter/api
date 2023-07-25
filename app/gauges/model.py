@@ -36,11 +36,14 @@ class Gauge(Model):
 
     # Bribes in the form of `token_address => token_amount`...
     rewards = HashField()
-    # Total Bribes Value
-    tbv = FloatField(default=0.0)
+    # Total Bribes Values
+    median_tbv = FloatField(default=0.0)
+    min_tbv = FloatField(default=0.0)
+    max_tbv = FloatField(default=0.0)
     # Voting APR
     votes = FloatField(default=0.0)
-    apr = FloatField(default=0.0)
+    min_apr = FloatField(default=0.0)
+    max_apr = FloatField(default=0.0)
 
     # TODO: Backwards compat. Remove once no longer needed...
     bribeAddress = TextField()
@@ -140,11 +143,15 @@ class Gauge(Model):
 
             votes = votes / 10**token.decimals
 
-            gauge.apr = cls.rebase_apr()
+            rebase_apr = cls.rebase_apr()
+
+            gauge.max_apr = rebase_apr
+            gauge.min_apr = rebase_apr
 
             if token.price and votes * token.price > 0:
                 gauge.votes = votes
-                gauge.apr += ((gauge.tbv * 52) / (votes * token.price)) * 100
+                gauge.max_apr += ((gauge.max_tbv * 52) / (votes * token.price)) * 100
+                gauge.min_apr += ((gauge.min_tbv * 52) / (votes * token.price)) * 100
                 gauge.save()
         except ValueError:
             gauge.apr = 0.0
@@ -170,9 +177,6 @@ class Gauge(Model):
                     [[bribe_token_address, None]],
                 )
             )
-        # _data = {}
-        # for call in reward_calls:
-        #     _data = {**_data, **call()}
 
         data = Multicall(reward_calls)()
 
@@ -185,10 +189,26 @@ class Gauge(Model):
                 token._update_price()
                 TokenPrices.update_token_prices_set(token.address)
 
-            gauge.rewards[token.address] = amount / 10**token.decimals
+            underlying_token_address = token.check_if_token_is_option(token.address)
 
-            if token.price:
-                gauge.tbv += amount / 10**token.decimals * token.price
+            if underlying_token_address:
+                underlying_token = Token.find(underlying_token_address)
+
+                if not TokenPrices.is_in_token_prices_set(underlying_token.address):
+                    underlying_token._update_price()
+                    TokenPrices.update_token_prices_set(underlying_token.address)
+
+                ve_discount = token.check_option_ve_discount(token.address)
+                max_token_value = underlying_token.price * (100 - ve_discount) / 100
+                if token.price and max_token_value:
+                    gauge.max_tbv += amount / 10**token.decimals * max_token_value
+                    gauge.min_tbv += amount / 10**token.decimals * token.price
+            else:
+                if token.price:
+                    gauge.max_tbv += amount / 10**token.decimals * token.price
+                    gauge.min_tbv += amount / 10**token.decimals * token.price
+
+            gauge.rewards[token.address] = amount / 10**token.decimals
 
             LOGGER.debug(
                 "Fetched %s:%s external reward %s:%s.",
@@ -197,5 +217,7 @@ class Gauge(Model):
                 bribe_token_address,
                 gauge.rewards[token.address],
             )
+
+        gauge.median_tbv = (gauge.max_tbv + gauge.min_tbv) / 2
 
         gauge.save()
