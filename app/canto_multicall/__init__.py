@@ -16,7 +16,7 @@ CANTO_MULTICALL3_ADDRESS: Dict[int, str] = {
 UPDATED_MULTICALL3_ADDRESSES = {**MULTICALL3_ADDRESSES, **CANTO_MULTICALL3_ADDRESS}
 
 
-class FantomMulticall(Multicall):
+class CantoMulticall(Multicall):
     def __init__(
         self,
         calls: List[Call],
