@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from multicall import Call
-from app.fantom_multicall import FantomMulticall as Multicall
+from app.base_multicall import BaseMulticall as Multicall
 import requests
 import requests.exceptions
 from walrus import Model, TextField, IntegerField, FloatField
@@ -16,6 +16,7 @@ from app.settings import (
     TOKENLISTS,
     ROUTER_ADDRESS,
     STABLE_TOKEN_ADDRESS,
+    ROUTE_TOKEN_ADDRESSES,
     IGNORED_TOKEN_ADDRESSES,
 )
 
@@ -56,6 +57,7 @@ class Token(Model):
         "42220": "celo",
         "7700": "canto",
         "369": "pulse",
+        "8453": "base",
     }
 
     def debank_price_in_stables(self):
@@ -96,7 +98,7 @@ class Token(Model):
             chain_name = self.CHAIN_NAMES[str(self.nativeChainId)]
             chain_token = chain_name + ":" + self.nativeChainAddress.lower()
         else:
-            chain_token = "fantom:" + self.address.lower()
+            chain_token = "base:" + self.address.lower()
 
         res = requests.get(self.DEFILLAMA_ENDPOINT + chain_token).json()
         coins = res.get("coins", {})
@@ -208,6 +210,32 @@ class Token(Model):
 
         return amount / 10**stablecoin.decimals
 
+    def chain_price_in_native(self):
+        """Returns the price quoted from our router in stables/W_NATIVE."""
+        # Peg it forever.
+        if self.address == STABLE_TOKEN_ADDRESS:
+            return 1.0
+
+        wrapped_native_coin = Token.find(ROUTE_TOKEN_ADDRESSES)
+        if not TokenPrices.is_in_token_prices_set(wrapped_native_coin.address):
+            wrapped_native_coin._update_price()
+            TokenPrices.update_token_prices_set(wrapped_native_coin.address)
+        try:
+            amount, is_stable = Call(
+                ROUTER_ADDRESS,
+                [
+                    "getAmountOut(uint256,address,address)(uint256,bool)",
+                    1 * 10**self.decimals,
+                    self.address,
+                    wrapped_native_coin.address,
+                ],
+            )()
+        except ContractLogicError:
+            return 0
+
+        amount_out = amount / 10**wrapped_native_coin.decimals
+        return amount_out * wrapped_native_coin.price
+
     @classmethod
     def find(cls, address):
         """Loads a token from the database, of from chain if not found."""
@@ -236,7 +264,8 @@ class Token(Model):
         self.price = self.aggregated_price_in_stables()
 
         if self.price == 0:
-            self.price = self.chain_price_in_stables()
+            # self.price = self.chain_price_in_stables()
+            self.price = self.chain_price_in_native()
 
         # if self.price == 0:
         #     self.price = self.debank_price_in_stables()

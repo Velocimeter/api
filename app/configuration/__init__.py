@@ -19,7 +19,7 @@ class Configuration(object):
     @classmethod
     def recache(cls):
         default_token = Token.find(DEFAULT_TOKEN_ADDRESS)
-        stable_token = Token.find(STABLE_TOKEN_ADDRESS)
+        # stable_token = Token.find(STABLE_TOKEN_ADDRESS)
         route_tokens = [Token.find(token) for token in ROUTE_TOKEN_ADDRESSES]
         route_token_data = [token._data for token in route_tokens]
 
@@ -27,12 +27,12 @@ class Configuration(object):
             dict(
                 data=[
                     default_token._data,
-                    stable_token._data,
+                    # stable_token._data,
                     *route_token_data
                 ],
                 meta=dict(
                     default_token=default_token._data,
-                    stable_token=stable_token._data,
+                    # stable_token=stable_token._data,
                     version=str(Version(*__version__))
                 )
             )

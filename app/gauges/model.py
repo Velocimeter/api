@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from multicall import Call
-from app.fantom_multicall import FantomMulticall as Multicall
+from app.base_multicall import BaseMulticall as Multicall
 from app.token_prices_set import TokenPrices
 from walrus import Model, TextField, IntegerField, FloatField, HashField
 
@@ -126,7 +126,10 @@ class Gauge(Model):
         supply = Call(VE_ADDRESS, "supply()(uint256)")()
         growth = Call(minter_address, ["calculate_growth(uint256)(uint256)", weekly])()
 
-        return ((growth * 52) / supply) * 100
+        try:
+            return ((growth * 52) / supply) * 100
+        except ZeroDivisionError:
+            return 0.0
 
     @classmethod
     def _update_apr(cls, gauge):
