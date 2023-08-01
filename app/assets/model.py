@@ -216,7 +216,7 @@ class Token(Model):
         if self.address == STABLE_TOKEN_ADDRESS:
             return 1.0
 
-        wrapped_native_coin = Token.find(ROUTE_TOKEN_ADDRESSES)
+        wrapped_native_coin = Token.find(ROUTE_TOKEN_ADDRESSES[0])
         if not TokenPrices.is_in_token_prices_set(wrapped_native_coin.address):
             wrapped_native_coin._update_price()
             TokenPrices.update_token_prices_set(wrapped_native_coin.address)
