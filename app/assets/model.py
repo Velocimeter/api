@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from multicall import Call
-from app.base_multicall import BaseMulticall as Multicall
+from app.gnosis_multicall import GnosisMulticall as Multicall
 import requests
 import requests.exceptions
 from walrus import Model, TextField, IntegerField, FloatField
@@ -58,6 +58,7 @@ class Token(Model):
         "7700": "canto",
         "369": "pulse",
         "8453": "base",
+        "100": "gnosis",
     }
 
     def debank_price_in_stables(self):
@@ -98,7 +99,7 @@ class Token(Model):
             chain_name = self.CHAIN_NAMES[str(self.nativeChainId)]
             chain_token = chain_name + ":" + self.nativeChainAddress.lower()
         else:
-            chain_token = "base:" + self.address.lower()
+            chain_token = "gnosis:" + self.address.lower()
 
         res = requests.get(self.DEFILLAMA_ENDPOINT + chain_token).json()
         coins = res.get("coins", {})
@@ -264,7 +265,9 @@ class Token(Model):
         self.price = self.aggregated_price_in_stables()
 
         if self.price == 0:
-            # self.price = self.chain_price_in_stables()
+            self.price = self.chain_price_in_stables()
+
+        if self.price == 0:
             self.price = self.chain_price_in_native()
 
         # if self.price == 0:
@@ -299,6 +302,8 @@ class Token(Model):
         except ContractLogicError:
             return False
         except AttributeError:
+            return False
+        except ValueError:
             return False
 
     @classmethod

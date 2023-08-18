@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from multicall import Call
-from app.base_multicall import BaseMulticall as Multicall
+from app.gnosis_multicall import GnosisMulticall as Multicall
 
 from app.settings import (
     LOGGER,
