@@ -7,7 +7,7 @@ RUN apt-get clean
 WORKDIR /app
 COPY ./ /app
 
-RUN pip install --no-cache-dir -e .
+RUN pip install -e . --no-binary :all: --no-cache-dir
 
 EXPOSE 3000
 
