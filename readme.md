@@ -1,8 +1,7 @@
 # Velodrome Finance HTTP API 🚲💨🕸️
 
 Velodrome Finance HTTP API is used by our app to fetch tokens and liquidity
-pool pairs.
-
+pool pairs. \
 Please make sure you have [Docker](https://docs.docker.com/install/) first.
 
 To build the image, run:
