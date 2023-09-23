@@ -116,16 +116,7 @@ class Token(Model):
         if self.address == STABLE_TOKEN_ADDRESS:
             return 1.0
 
-        if (
-            self.nativeChainAddress != ""
-            and self.nativeChainId != 0
-            and self.nativeChainAddress is not None
-            and self.nativeChainId is not None
-        ):
-            chain_name = self.CHAIN_NAMES[str(self.nativeChainId)]
-            chain_token = chain_name + ":" + self.nativeChainAddress.lower()
-        else:
-            chain_token = "base/tokens/" + self.address.lower()
+        chain_token = "base/tokens/" + self.address.lower()
 
         res = requests.get(self.GECKOTERMINAL_ENDPOINT + chain_token).json()
         try:
