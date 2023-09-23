@@ -4,7 +4,7 @@ import math
 import json
 
 from multicall import Call
-from app.base_multicall import BaseMulticall as Multicall
+from app.scroll_testnet_multicall import ScrollTestnetMulticall as Multicall
 from app.token_prices_set import TokenPrices
 from app.killed_gauges import KilledGaugesStore
 from walrus import Model, TextField, IntegerField, BooleanField, FloatField, ListField
@@ -305,7 +305,7 @@ class Pair(Model):
 
         data["address"] = address
         data["total_supply"] = data["total_supply"] / (10 ** data["decimals"])
-
+        print("HERE")
         _token0 = Token.find(data["token0_address"])
         if not TokenPrices.is_in_token_prices_set(_token0.address):
             _token0._update_price()

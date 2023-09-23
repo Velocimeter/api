@@ -11,16 +11,16 @@ To build the image, run:
 $ docker build ./ -t velodrome/api
 ```
 
-Next, populate the `env.example.base` file, and update the relevant variables.
+Next, populate the `env.example.scroll` file, and update the relevant variables.
 
 Finally, to start the container, run:
 
 ```
-$ docker run --rm --env-file=env.example.base -v $(pwd):/app -p 3001:3001 -w /app -it velodrome/api
+$ docker run --rm --env-file=env.example.scroll -v $(pwd):/app -p 3001:3001 -w /app -it velodrome/api
 ```
 
 To run the syncer (refreshes data from chain) process, run:
 
 ```
-$ docker run --rm --env-file=env.example.base -v $(pwd):/app -p 3001:3001 -w /app -it velodrome/api sh -c 'python -m app.pairs.syncer'
+$ docker run --rm --env-file=env.example.scroll -v $(pwd):/app -p 3001:3001 -w /app -it velodrome/api sh -c 'python -m app.pairs.syncer'
 ```

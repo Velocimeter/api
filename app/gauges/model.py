@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from multicall import Call
-from app.base_multicall import BaseMulticall as Multicall
+from app.scroll_testnet_multicall import ScrollTestnetMulticall as Multicall
 from app.token_prices_set import TokenPrices
 from walrus import Model, TextField, IntegerField, FloatField, HashField
 

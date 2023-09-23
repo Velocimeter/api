@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from multicall import Call
-from app.base_multicall import BaseMulticall as Multicall
+from app.scroll_testnet_multicall import ScrollTestnetMulticall as Multicall
 
 from app.settings import (
     LOGGER,

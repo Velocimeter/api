@@ -3,7 +3,7 @@
 from datetime import datetime
 
 from multicall import Call
-from app.base_multicall import BaseMulticall as Multicall
+from app.scroll_testnet_multicall import ScrollTestnetMulticall as Multicall
 from walrus import Model, TextField, IntegerField, DateTimeField
 
 from app.rewards import BribeReward, EmissionReward, FeeReward
