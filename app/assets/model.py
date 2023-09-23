@@ -197,6 +197,13 @@ class Token(Model):
         price = 0
 
         try:
+            price = self.geckoterminal_price_in_stables()
+            if price != 0:
+                return price
+        except:
+            pass
+
+        try:
             return self.dexscreener_price_in_stables()
         except (requests.exceptions.HTTPError, requests.exceptions.JSONDecodeError):
             return price
