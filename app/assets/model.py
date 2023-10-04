@@ -41,6 +41,8 @@ class Token(Model):
     DEXSCREENER_ENDPOINT = "https://api.dexscreener.com/latest/dex/tokens/"
     # See: https://defillama.com/docs/api#operations-tag-coins
     DEFILLAMA_ENDPOINT = "https://coins.llama.fi/prices/current/"
+    # See: https://www.geckoterminal.com/dex-api
+    GECKOTERMINAL_ENDPOINT = "https://api.geckoterminal.com/api/v2/networks/"
     # See: https://api.dev.dex.guru/docs#tag/Token-Finance
     DEXGURU_ENDPOINT = "https://api.dev.dex.guru/v1/chain/10/tokens/%/market"
     # See: https://docs.open.debank.com/en/reference/api-pro-reference/token
@@ -108,6 +110,21 @@ class Token(Model):
             return coin.get("price", 0)
 
         return 0
+
+    def geckoterminal_price_in_stables(self):
+        """Returns the price quoted from our llama defis."""
+        # Peg it forever.
+        if self.address == STABLE_TOKEN_ADDRESS:
+            return 1.0
+
+        chain_token = "base/tokens/" + self.address.lower()
+
+        res = requests.get(self.GECKOTERMINAL_ENDPOINT + chain_token).json()
+        try:
+            data = res.get("data", {})
+            return float(data["attributes"]["price_usd"])
+        except:
+            return 0
 
     def one_inch_price_in_stables(self):
         """Returns the price quoted from an aggregator in stables/USDC."""
@@ -180,8 +197,12 @@ class Token(Model):
         # price = self.defillama_price_in_stables()
         price = 0
 
-        if price != 0:
-            return price
+        try:
+            price = self.geckoterminal_price_in_stables()
+            if price != 0:
+                return price
+        except:
+            pass
 
         try:
             return self.dexscreener_price_in_stables()
