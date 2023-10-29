@@ -7,7 +7,7 @@ from versiontools import Version
 
 from app import __version__
 from app.pairs import Token
-from app.settings import CACHE, DEFAULT_TOKEN_ADDRESS, STABLE_TOKEN_ADDRESS,\
+from app.settings import CACHE, DEFAULT_TOKEN_ADDRESS, STABLE_TOKEN_ADDRESS, \
     ROUTE_TOKEN_ADDRESSES, LOGGER
 
 
