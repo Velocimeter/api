@@ -269,6 +269,12 @@ class Token(Model):
 
     def _update_price(self):
         """Updates the token price in USD from different sources."""
+        # TEMP
+        if self.address.lower() == "0xa97792ea3ef60d115120ac7f5fc7bd4d8ad34715".lower():
+            self.price = 0
+            self.save()
+        # TEMP
+
         underlying_token = self.check_if_token_is_option(self.address)
         if underlying_token:
             token = Token.find(underlying_token)
