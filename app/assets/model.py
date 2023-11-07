@@ -318,7 +318,7 @@ class Token(Model):
             TokenPrices.update_token_prices_set(wrapped_native_coin.address)
 
         o_wig_price_in_usd = o_wig_price_in_eth * wrapped_native_coin.price
-        print("oWIG price in USD: ", o_wig_price_in_usd)
+
         return o_wig_price_in_usd
 
     @classmethod
