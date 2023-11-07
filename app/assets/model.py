@@ -276,6 +276,13 @@ class Token(Model):
             return
         # TEMP
 
+        # oWIG logic
+        if self.address.lower() == "0xbe1053ec4Ac137c9A5B4462d53d5c2c0B89a2B79".lower():
+            self.price = self._update_owig_price()
+            self.save()
+            return
+        # oWIG logic
+
         underlying_token = self.check_if_token_is_option(self.address)
         if underlying_token:
             token = Token.find(underlying_token)
@@ -298,6 +305,21 @@ class Token(Model):
         # if self.price == 0:
         #     self.price = self.debank_price_in_stables()
         self.save()
+
+    def _update_owig_price(self):
+        """Updates the value of oWIG in USD from WIG contract."""
+        wig_address = "0x58Dd173F30EcfFdfEbCd242C71241fB2f179e9B9"
+        o_wig_price_in_eth = Call(wig_address, ["getOTokenPrice()(uint256)"])()
+        wrapped_native_coin = Token.find(ROUTE_TOKEN_ADDRESSES[0])
+        o_wig_price_in_eth = o_wig_price_in_eth / 10**wrapped_native_coin.decimals
+
+        if not TokenPrices.is_in_token_prices_set(wrapped_native_coin.address):
+            wrapped_native_coin._update_price()
+            TokenPrices.update_token_prices_set(wrapped_native_coin.address)
+
+        o_wig_price_in_usd = o_wig_price_in_eth * wrapped_native_coin.price
+        print("oWIG price in USD: ", o_wig_price_in_usd)
+        return o_wig_price_in_usd
 
     @classmethod
     def check_option_discount(cls, address):
