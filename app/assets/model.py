@@ -114,7 +114,7 @@ class Token(Model):
         if self.address == STABLE_TOKEN_ADDRESS:
             return 1.0
 
-        chain_token = "base/tokens/" + self.address.lower()
+        chain_token = "ftm/tokens/" + self.address.lower()
 
         res = requests.get(self.GECKOTERMINAL_ENDPOINT + chain_token).json()
         try:
