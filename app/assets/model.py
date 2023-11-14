@@ -176,7 +176,8 @@ class Token(Model):
         return float(price)
 
     def aggregated_price_in_stables(self):
-        price = self.defillama_price_in_stables()
+        # price = self.defillama_price_in_stables()
+        price = 0
 
         if price != 0:
             return price
