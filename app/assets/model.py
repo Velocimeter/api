@@ -186,8 +186,10 @@ class Token(Model):
         return float(price)
 
     def aggregated_price_in_stables(self):
-        # price = self.defillama_price_in_stables()
         price = 0
+
+        if self.address.lower() == ROUTER_ADDRESS.lower():
+            price = self.defillama_price_in_stables()
 
         try:
             price = self.geckoterminal_price_in_stables()
