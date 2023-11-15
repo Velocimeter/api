@@ -182,15 +182,6 @@ class Token(Model):
                 #   ValueError: could not convert string to float: '1,272.43'
                 price = str(prices.get("priceUsd") or 0).replace(",", "")
                 break
-            else:
-                if (
-                    prices["baseToken"]["address"].lower() == self.address.lower()
-                    and prices["baseToken"]["symbol"].lower() in self.symbol.lower()
-                    and not prices["quoteToken"]["address"].lower()
-                    == "0x04068DA6C83AFCFA0e13ba15A6696662335D5B75".lower()
-                ):
-                    price = str(prices.get("priceUsd") or 0).replace(",", "")
-                    break
 
         return float(price)
 
